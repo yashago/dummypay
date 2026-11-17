@@ -144,9 +144,16 @@ describe('Recipient lookup', () => {
     expect(error).not.toBeNull()
   })
 
-  it('is rate limited (20/min), counting failed probes too', async () => {
+  it('is rate limited (20/min), counting failed probes too', { timeout: 90_000 }, async () => {
     const prober = await createTestUser('USD', 'Prober')
     const asProber = await signInAs(prober)
+    // hit_rate_limit counts per fixed clock minute. If the 21 calls straddle a
+    // minute boundary, neither window exceeds 20 and the test flakes — so start
+    // early in a fresh window (the margin also absorbs client/server clock skew).
+    const msIntoMinute = Date.now() % 60_000
+    if (msIntoMinute > 30_000) {
+      await new Promise((r) => setTimeout(r, 60_000 - msIntoMinute + 2_000))
+    }
     const results = []
     for (let i = 0; i < 21; i++) {
       results.push(

@@ -42,6 +42,11 @@ pushed (`b82d340`, `2f7be4a`). The pull request has been opened by hand.
   pull request branches.
 - `deploy-backend` has never run. The `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` values
   are untested in CI.
+- `hit_rate_limit` counts calls per fixed clock minute, so a burst that crosses a minute
+  boundary can make up to 2× the limit (for example 40 recipient lookups in a few seconds). The
+  PRD doesn't specify a limit. The rate-limit test now starts at the beginning of a fresh minute
+  (it failed intermittently in CI on 2026-11-17). A sliding-window limit would need a migration;
+  not decided.
 - React logs "Select is changing from uncontrolled to controlled" warnings during E2E runs. They
   are harmless and haven't been fixed.
 - Other known limitations (password-reset email limits, `npm audit` findings and more) are
