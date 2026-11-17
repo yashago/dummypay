@@ -24,6 +24,23 @@ export async function signIn(input: LoginInput) {
   return data
 }
 
+/**
+ * Sends a password-reset email. Supabase responds the same way whether or not
+ * the address is registered, so this can't be used to discover accounts.
+ */
+export async function requestPasswordReset(email: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  })
+  if (error) throw error
+}
+
+/** Sets a new password for the user signed in by the recovery link. */
+export async function updatePassword(password: string) {
+  const { error } = await supabase.auth.updateUser({ password })
+  if (error) throw error
+}
+
 export async function signOut() {
   const { error } = await supabase.auth.signOut()
   if (error) throw error
