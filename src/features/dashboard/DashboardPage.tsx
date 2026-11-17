@@ -1,0 +1,49 @@
+import { AlertCircle, Wallet } from 'lucide-react'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useProfile } from '@/features/profile/api'
+import { useWallets } from '@/features/wallets/api'
+import { WalletCard } from '@/features/wallets/components/WalletCard'
+
+/** Phase 1 dashboard: balances only. Rates, recent activity and actions arrive in later phases. */
+export function DashboardPage() {
+  const profile = useProfile()
+  const wallets = useWallets()
+
+  return (
+    <>
+      <PageHeader
+        title="Dashboard"
+        description={profile.data ? `Welcome back, ${profile.data.display_name}.` : undefined}
+      />
+
+      <h2 className="mb-3 text-sm font-medium text-muted-foreground">Your balances</h2>
+      {wallets.isPending ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
+      ) : wallets.isError ? (
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertDescription>We couldn't load your wallets. Please refresh the page.</AlertDescription>
+        </Alert>
+      ) : wallets.data.length === 0 ? (
+        <EmptyState icon={Wallet} title="No wallets yet" />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {wallets.data.map((w) => (
+            <WalletCard
+              key={w.id}
+              currency={w.currency}
+              balanceMinor={w.balance_minor}
+              preferred={w.currency === profile.data?.preferred_currency}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
