@@ -69,6 +69,15 @@ npm run fn:deploy                                           # after changing fun
 | `npm run db:types` | Regenerate `src/types/database.ts` from the hosted schema |
 | `npm run fn:deploy` | Deploy Edge Functions (bundled server-side, no Docker) |
 
+## Testing notes
+
+- Integration and E2E tests run against the hosted project. Tests that need exchange rates
+  snapshot the real `fx_rates`, seed fixed fixture rates, and restore the originals afterwards.
+- Playwright runs with one worker (specs share that rate fixture). Full flows run on the desktop
+  project; the mobile project runs `shell.spec.ts` and `mobile.spec.ts` (layout + navigation).
+- Transfer concurrency, idempotency and ledger-reconciliation tests live in
+  `tests/integration/phase3-transfers.test.ts`.
+
 ## Project layout
 
 ```

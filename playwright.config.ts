@@ -12,9 +12,13 @@ export default defineConfig({
     baseURL: 'http://localhost:5173',
     trace: 'retain-on-failure',
   },
+  // Specs share global state in the hosted project (exchange-rate fixtures) and
+  // auth is rate-limited, so run one spec at a time.
+  workers: 1,
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile', use: { ...devices['Pixel 7'] } },
+    // Mobile runs layout-focused specs only (full flows would double the sign-ins).
+    { name: 'mobile', use: { ...devices['Pixel 7'] }, testMatch: /(shell|mobile)\.spec\.ts$/ },
   ],
   webServer: {
     command: 'npm run dev',

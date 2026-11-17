@@ -3,8 +3,6 @@ import { restoreFx, seedFixtureRates, snapshotFx } from '../fixtures/fx'
 import { admin, createE2EUser, deleteUsersByEmail, signInViaUi } from './support'
 
 test.describe('Phase 2 — wallets, rates, conversion preview, preferred currency', () => {
-  test.skip(({ isMobile }) => isMobile, 'runs on desktop only to respect auth rate limits')
-
   let snapshot: Awaited<ReturnType<typeof snapshotFx>>
   let email: string
 

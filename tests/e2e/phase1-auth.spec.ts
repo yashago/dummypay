@@ -3,8 +3,6 @@ import { deleteUsersByEmail, e2eEmail, TEST_PASSWORD } from './support'
 
 // Sign-up/sign-in are rate-limited per IP, so this flow runs once (desktop only).
 test.describe('Phase 1 — registration, profile, sign-out, sign-in', () => {
-  test.skip(({ isMobile }) => isMobile, 'auth flow runs on desktop only to respect rate limits')
-
   const email = e2eEmail()
   test.afterAll(async () => {
     await deleteUsersByEmail([email])

@@ -11,9 +11,13 @@ export function e2eEmail() {
   return `e2e-${randomUUID().slice(0, 12)}@test.dummypay.dev`
 }
 
-export const admin = createClient<Database>(process.env.SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!, {
-  auth: { persistSession: false, autoRefreshToken: false },
-})
+export const admin = createClient<Database>(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SECRET_KEY!,
+  {
+    auth: { persistSession: false, autoRefreshToken: false },
+  },
+)
 
 /** Creates a confirmed user via the admin API (no sign-up rate limit). */
 export async function createE2EUser(displayName: string, currency: 'ILS' | 'USD' | 'EUR' | 'GBP') {

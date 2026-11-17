@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RatesCard } from '@/features/fx/components/RatesCard'
+import { RecentTransactionsCard } from '@/features/history/components/RecentTransactionsCard'
 import { useProfile } from '@/features/profile/api'
 import { useWallets } from '@/features/wallets/api'
 import { TotalBalanceCard } from '@/features/wallets/components/TotalBalanceCard'
@@ -62,6 +63,8 @@ export function DashboardPage() {
               </div>
             )}
           </section>
+
+          <RecentTransactionsCard />
         </div>
 
         <div className="space-y-6">{preferred && <RatesCard base={preferred} />}</div>

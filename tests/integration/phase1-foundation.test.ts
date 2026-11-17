@@ -190,6 +190,8 @@ describe('Authorization & data isolation', () => {
       recipient_wallet_id: wallet.id,
       receiving_amount_minor: 1_000_000,
       receiving_currency: 'ILS',
+      recipient_display_name: 'Alice Test',
+      recipient_email: alice.email,
     })
     expect(txnErr?.code).toBe('42501')
     expect(await walletsOf(alice.id)).toHaveLength(1)

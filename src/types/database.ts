@@ -126,6 +126,35 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          action: string
+          hits: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          action: string
+          hits?: number
+          user_id: string
+          window_start: string
+        }
+        Update: {
+          action?: string
+          hits?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rate_limits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supported_currencies: {
         Row: {
           code: Database["public"]["Enums"]["currency_code"]
@@ -162,8 +191,12 @@ export type Database = {
           rate_provider_updated_at: string | null
           receiving_amount_minor: number
           receiving_currency: Database["public"]["Enums"]["currency_code"]
+          recipient_display_name: string
+          recipient_email: string
           recipient_user_id: string
           recipient_wallet_id: string
+          sender_display_name: string | null
+          sender_email: string | null
           sender_user_id: string | null
           sender_wallet_id: string | null
           sending_amount_minor: number | null
@@ -182,8 +215,12 @@ export type Database = {
           rate_provider_updated_at?: string | null
           receiving_amount_minor: number
           receiving_currency: Database["public"]["Enums"]["currency_code"]
+          recipient_display_name: string
+          recipient_email: string
           recipient_user_id: string
           recipient_wallet_id: string
+          sender_display_name?: string | null
+          sender_email?: string | null
           sender_user_id?: string | null
           sender_wallet_id?: string | null
           sending_amount_minor?: number | null
@@ -202,8 +239,12 @@ export type Database = {
           rate_provider_updated_at?: string | null
           receiving_amount_minor?: number
           receiving_currency?: Database["public"]["Enums"]["currency_code"]
+          recipient_display_name?: string
+          recipient_email?: string
           recipient_user_id?: string
           recipient_wallet_id?: string
+          sender_display_name?: string | null
+          sender_email?: string | null
           sender_user_id?: string | null
           sender_wallet_id?: string | null
           sending_amount_minor?: number | null
@@ -212,6 +253,13 @@ export type Database = {
           type?: Database["public"]["Enums"]["txn_type"]
         }
         Relationships: [
+          {
+            foreignKeyName: "transactions_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: true
+            referencedRelation: "transfer_quotes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "transactions_recipient_user_id_fkey"
             columns: ["recipient_user_id"]
@@ -238,6 +286,72 @@ export type Database = {
             columns: ["sender_wallet_id"]
             isOneToOne: false
             referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transfer_quotes: {
+        Row: {
+          amount_input_side: Database["public"]["Enums"]["amount_side"]
+          consumed_at: string | null
+          created_at: string
+          exchange_rate: number
+          expires_at: string
+          id: string
+          rate_provider: string
+          rate_provider_updated_at: string
+          receiving_amount_minor: number
+          receiving_currency: Database["public"]["Enums"]["currency_code"]
+          recipient_user_id: string
+          sender_user_id: string
+          sending_amount_minor: number
+          sending_currency: Database["public"]["Enums"]["currency_code"]
+        }
+        Insert: {
+          amount_input_side: Database["public"]["Enums"]["amount_side"]
+          consumed_at?: string | null
+          created_at?: string
+          exchange_rate: number
+          expires_at: string
+          id?: string
+          rate_provider: string
+          rate_provider_updated_at: string
+          receiving_amount_minor: number
+          receiving_currency: Database["public"]["Enums"]["currency_code"]
+          recipient_user_id: string
+          sender_user_id: string
+          sending_amount_minor: number
+          sending_currency: Database["public"]["Enums"]["currency_code"]
+        }
+        Update: {
+          amount_input_side?: Database["public"]["Enums"]["amount_side"]
+          consumed_at?: string | null
+          created_at?: string
+          exchange_rate?: number
+          expires_at?: string
+          id?: string
+          rate_provider?: string
+          rate_provider_updated_at?: string
+          receiving_amount_minor?: number
+          receiving_currency?: Database["public"]["Enums"]["currency_code"]
+          recipient_user_id?: string
+          sender_user_id?: string
+          sending_amount_minor?: number
+          sending_currency?: Database["public"]["Enums"]["currency_code"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfer_quotes_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_quotes_sender_user_id_fkey"
+            columns: ["sender_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -340,6 +454,54 @@ export type Database = {
         }
         Returns: number
       }
+      create_transfer_quote: {
+        Args: {
+          p_amount_minor: number
+          p_input_side: Database["public"]["Enums"]["amount_side"]
+          p_recipient_id: string
+          p_sending_currency: Database["public"]["Enums"]["currency_code"]
+        }
+        Returns: Database["public"]["CompositeTypes"]["transfer_quote_view"]
+        SetofOptions: {
+          from: "*"
+          to: "transfer_quote_view"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      execute_transfer: {
+        Args: { p_idempotency_key: string; p_quote_id: string }
+        Returns: {
+          amount_input_side: Database["public"]["Enums"]["amount_side"] | null
+          created_at: string
+          exchange_rate: number | null
+          id: string
+          idempotency_key: string | null
+          quote_id: string | null
+          rate_provider: string | null
+          rate_provider_updated_at: string | null
+          receiving_amount_minor: number
+          receiving_currency: Database["public"]["Enums"]["currency_code"]
+          recipient_display_name: string
+          recipient_email: string
+          recipient_user_id: string
+          recipient_wallet_id: string
+          sender_display_name: string | null
+          sender_email: string | null
+          sender_user_id: string | null
+          sender_wallet_id: string | null
+          sending_amount_minor: number | null
+          sending_currency: Database["public"]["Enums"]["currency_code"] | null
+          status: Database["public"]["Enums"]["txn_status"]
+          type: Database["public"]["Enums"]["txn_type"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "transactions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       fx_max_age: { Args: never; Returns: string }
       fx_rate: {
         Args: {
@@ -362,6 +524,15 @@ export type Database = {
           wallet_count: number
         }[]
       }
+      hit_rate_limit: {
+        Args: {
+          p_action: string
+          p_limit: number
+          p_user: string
+          p_window: string
+        }
+        Returns: undefined
+      }
       ingest_fx_rates: {
         Args: {
           p_provider: string
@@ -369,6 +540,47 @@ export type Database = {
           p_rates: Json
         }
         Returns: undefined
+      }
+      list_my_transactions: {
+        Args: {
+          p_currency?: Database["public"]["Enums"]["currency_code"]
+          p_direction?: string
+          p_from?: string
+          p_limit?: number
+          p_offset?: number
+          p_to?: string
+        }
+        Returns: {
+          amount_input_side: Database["public"]["Enums"]["amount_side"]
+          created_at: string
+          direction: string
+          exchange_rate: number
+          id: string
+          rate_provider_updated_at: string
+          receiving_amount_minor: number
+          receiving_currency: Database["public"]["Enums"]["currency_code"]
+          recipient_display_name: string
+          recipient_email: string
+          recipient_user_id: string
+          sender_display_name: string
+          sender_email: string
+          sender_user_id: string
+          sending_amount_minor: number
+          sending_currency: Database["public"]["Enums"]["currency_code"]
+          status: Database["public"]["Enums"]["txn_status"]
+          total_count: number
+          type: Database["public"]["Enums"]["txn_type"]
+        }[]
+      }
+      lookup_recipient: {
+        Args: { p_email: string }
+        Returns: {
+          display_name: string
+          email: string
+          preferred_currency: Database["public"]["Enums"]["currency_code"]
+          status: string
+          user_id: string
+        }[]
       }
       preview_conversion: {
         Args: {
@@ -412,7 +624,20 @@ export type Database = {
       txn_type: "initial_grant" | "transfer"
     }
     CompositeTypes: {
-      [_ in never]: never
+      transfer_quote_view: {
+        quote_id: string | null
+        recipient_user_id: string | null
+        recipient_display_name: string | null
+        recipient_email: string | null
+        sending_currency: Database["public"]["Enums"]["currency_code"] | null
+        receiving_currency: Database["public"]["Enums"]["currency_code"] | null
+        sending_amount_minor: number | null
+        receiving_amount_minor: number | null
+        amount_input_side: Database["public"]["Enums"]["amount_side"] | null
+        exchange_rate: number | null
+        rate_provider_updated_at: string | null
+        expires_at: string | null
+      }
     }
   }
 }

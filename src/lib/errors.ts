@@ -35,6 +35,17 @@ const RPC_MESSAGES: Record<string, string> = {
   WALLET_EXISTS: 'You already have a wallet in this currency.',
   RATE_UNAVAILABLE: 'Exchange rates are currently unavailable. Please try again later.',
   RATE_STALE: 'Exchange rates are out of date. Please try again shortly.',
+  RATE_LIMITED: 'Too many requests. Please wait a minute and try again.',
+  INVALID_EMAIL: 'Enter a valid email address.',
+  RECIPIENT_NOT_FOUND: 'No registered user found with this email address.',
+  SELF_TRANSFER: 'You cannot send money to yourself.',
+  NO_WALLET: "You don't have a wallet in that currency.",
+  INSUFFICIENT_FUNDS: 'Insufficient funds in the selected wallet.',
+  QUOTE_EXPIRED: 'This quote has expired. Please review the transfer again.',
+  QUOTE_USED: 'This transfer has already been processed.',
+  QUOTE_NOT_FOUND: 'This transfer could not be found. Please start again.',
+  IDEMPOTENCY_CONFLICT: 'This request was already used for a different transfer. Please start again.',
+  INVALID_REQUEST: 'The request was invalid. Please start again.',
 }
 
 /** Extracts the leading CODE from a Postgres function error, if any. */
