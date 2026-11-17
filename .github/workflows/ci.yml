@@ -9,7 +9,8 @@
 # cancelled test run could leave fixture exchange rates behind).
 # Vercel deploys the frontend itself on every push to main.
 #
-# Required repository configuration (Settings → Secrets and variables → Actions):
+# Required configuration, stored in the "DummyPay env" environment
+# (Settings → Environments); deploy-backend and db-tests declare it:
 #   Variables: SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_PROJECT_REF
 #   Secrets:   SUPABASE_SECRET_KEY    (integration/E2E setup and cleanup)
 #              SUPABASE_ACCESS_TOKEN  (CLI: db push / functions deploy)
@@ -61,6 +62,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: checks
     runs-on: ubuntu-latest
+    environment: DummyPay env
     timeout-minutes: 15
     concurrency:
       # Own group so a queued test run can never displace a queued deploy.
@@ -93,6 +95,7 @@ jobs:
       ${{ !cancelled() && needs.checks.result == 'success' &&
           (needs.deploy-backend.result == 'success' || needs.deploy-backend.result == 'skipped') }}
     runs-on: ubuntu-latest
+    environment: DummyPay env
     timeout-minutes: 30
     concurrency:
       # One test run at a time against the shared project (rate fixture, Auth

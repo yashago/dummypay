@@ -91,13 +91,16 @@ runs against the project at a time; if a newer run supersedes a queued one, GitH
 older one cancelled — re-run it if needed. In CI the tests get their keys from environment
 variables instead of `.env.test`; `signInAs` backs off and retries on Auth's 429 rate limit.
 
-Configure in **Settings → Secrets and variables → Actions**:
+The values live in the **`DummyPay env`** environment (**Settings → Environments**), which
+`deploy-backend` and `db-tests` declare:
 
 - Variables: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_PROJECT_REF`
 - Secrets: `SUPABASE_SECRET_KEY` (test setup/cleanup), `SUPABASE_ACCESS_TOKEN` (Supabase CLI
   personal access token for the deploy job)
 
 PRs from forks don't receive secrets, so their `db-tests` job fails at the configuration check.
+If the environment's deployment branches are restricted (e.g. to `main`), `db-tests` can't run
+on PR branches — leave it unrestricted, or move the test values to repository level.
 
 ## Security model
 
