@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test'
 
+// Set E2E_BASE_URL to run against a deployment (e.g. the Vercel URL) instead
+// of the local dev server.
+const remoteBaseUrl = process.env.E2E_BASE_URL
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false,
@@ -9,7 +13,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   timeout: 60_000,
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: remoteBaseUrl ?? 'http://localhost:5173',
     trace: 'retain-on-failure',
   },
   // Specs share global state in the hosted project (exchange-rate fixtures) and
@@ -20,9 +24,7 @@ export default defineConfig({
     // Mobile runs layout-focused specs only (full flows would double the sign-ins).
     { name: 'mobile', use: { ...devices['Pixel 7'] }, testMatch: /(shell|mobile)\.spec\.ts$/ },
   ],
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: remoteBaseUrl
+    ? undefined
+    : { command: 'npm run dev', url: 'http://localhost:5173', reuseExistingServer: !process.env.CI },
 })

@@ -31,3 +31,4 @@ supabase/functions/.env
 
 # local Claude Code settings
 .claude/
+.vercel
