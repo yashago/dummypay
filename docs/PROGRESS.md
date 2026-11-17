@@ -28,6 +28,9 @@ and limitations: [README.md](../README.md).
 pushed (`b82d340`, `2f7be4a`). The pull request has been opened by hand.
 
 - Jobs: `checks` (no secrets), `deploy-backend` (pushes to `main` only), `db-tests` (hosted project).
+- `checks` runs typecheck, lint, unit tests and build as 4 parallel matrix jobs. In `db-tests`,
+  the Playwright browser installs in the background while the integration tests run. Neither
+  change has been run on GitHub yet.
 - The first run failed because none of the Supabase values reached the jobs. They are stored in
   the GitHub environment `DummyPay env`, and the jobs didn't declare it. Fixed in `2f7be4a`; the
   re-run result is **unverified**.
@@ -51,6 +54,10 @@ pushed (`b82d340`, `2f7be4a`). The pull request has been opened by hand.
 - All money operations go through Postgres functions. Identity comes only from `auth.uid()`.
 - CI: the jobs that use the hosted project share non-cancelling concurrency groups. Vercel still
   deploys the frontend. Supabase values live in the `DummyPay env` environment.
+- **Integration and E2E tests must not overlap** while they share the live project: both swap
+  and restore the exchange rates, integration tests make the rates stale on purpose, and the
+  integration setup deletes all `@test.dummypay.dev` users. Real test parallelism would need a
+  separate test project (decided against on 2026-11-17).
 - Tests account for Auth's limit of 30 sign-ins per 5 minutes per IP: users are created through
   the admin API, `signInAs` retries on a 429, and Playwright retries only once in CI.
 

@@ -34,12 +34,18 @@ env:
 
 jobs:
   checks:
-    name: Typecheck, lint, unit tests, build
+    # The four checks run as parallel jobs; `needs: checks` waits for all of them.
+    name: ${{ matrix.task }}
+    strategy:
+      fail-fast: false # report every failing check, not just the first
+      matrix:
+        task: [typecheck, lint, test:unit, build]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      # Safe to cancel: superseded fast checks on the same PR/branch.
-      group: checks-${{ github.ref }}
+      # Safe to cancel: superseded fast checks on the same PR/branch. The task
+      # is part of the group so the parallel jobs don't cancel each other.
+      group: checks-${{ github.ref }}-${{ matrix.task }}
       cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     env:
       # Unit tests and the build never call Supabase; placeholders are enough.
@@ -52,10 +58,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run test:unit
-      - run: npm run build
+      - run: npm run ${{ matrix.task }}
 
   deploy-backend:
     name: Deploy Supabase migrations & functions
@@ -121,13 +124,26 @@ jobs:
         run: |
           missing=0
           for v in SUPABASE_URL SUPABASE_PUBLISHABLE_KEY SUPABASE_SECRET_KEY; do
-            if [ -z "${!v}" ]; then echo "::error::$v is not configured for this repository"; missing=1; fi
+            if [ -z "${!v}" ]; then echo "::error::$v is not set in the 'DummyPay env' environment"; missing=1; fi
           done
           exit $missing
+      # The browser download doesn't touch Supabase, so it overlaps with the
+      # integration tests. (The two test suites themselves must not overlap:
+      # they share exchange-rate fixtures and test users on the live project.)
+      - name: Start Playwright browser install (background)
+        run: |
+          # `|| code=$?` keeps bash -e from exiting before the exit code is written.
+          ( code=0
+            npx playwright install --with-deps chromium > "$RUNNER_TEMP/pw-install.log" 2>&1 || code=$?
+            echo "$code" > "$RUNNER_TEMP/pw-install.exit" ) &
       - name: Integration tests
         run: npm run test:int
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+      - name: Wait for Playwright browser install
+        timeout-minutes: 10
+        run: |
+          while [ ! -f "$RUNNER_TEMP/pw-install.exit" ]; do sleep 2; done
+          cat "$RUNNER_TEMP/pw-install.log"
+          exit "$(cat "$RUNNER_TEMP/pw-install.exit")"
       - name: E2E tests
         run: npm run test:e2e
       - name: Upload Playwright report

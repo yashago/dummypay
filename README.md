@@ -81,14 +81,16 @@ tables have no columns for full card numbers or CVVs. The same validation module
 
 | Job | When | What |
 | --- | --- | --- |
-| `checks` | every PR and push to `main` | typecheck, lint, unit tests, build (no secrets needed) |
+| `checks` | every PR and push to `main` | typecheck, lint, unit tests, build as 4 parallel jobs (no secrets needed) |
 | `deploy-backend` | push to `main` only, after `checks` | `supabase db push` + Edge Functions deploy |
 | `db-tests` | after `checks` (and on `main`, after the deploy) | integration + E2E tests against the hosted project |
 
 The frontend is still deployed by Vercel's GitHub integration. Because the Supabase project is
 shared, the deploy and the test runs each use a non-cancelling concurrency group, so only one
 runs against the project at a time; if a newer run supersedes a queued one, GitHub marks the
-older one cancelled — re-run it if needed. In CI the tests get their keys from environment
+older one cancelled — re-run it if needed. Integration and E2E tests stay sequential (they
+share exchange-rate fixtures and test-user cleanup on the live project); only the Playwright
+browser download overlaps the integration run. In CI the tests get their keys from environment
 variables instead of `.env.test`; `signInAs` backs off and retries on Auth's 429 rate limit.
 
 The values live in the **`DummyPay env`** environment (**Settings → Environments**), which
