@@ -94,6 +94,69 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          amount_minor: number
+          created_at: string
+          currency: Database["public"]["Enums"]["currency_code"]
+          id: string
+          is_read: boolean
+          kind: string
+          message: string
+          read_at: string | null
+          sender_display_name: string
+          sender_email: string
+          title: string
+          transaction_id: string
+          user_id: string
+        }
+        Insert: {
+          amount_minor: number
+          created_at?: string
+          currency: Database["public"]["Enums"]["currency_code"]
+          id?: string
+          is_read?: boolean
+          kind?: string
+          message: string
+          read_at?: string | null
+          sender_display_name: string
+          sender_email: string
+          title: string
+          transaction_id: string
+          user_id: string
+        }
+        Update: {
+          amount_minor?: number
+          created_at?: string
+          currency?: Database["public"]["Enums"]["currency_code"]
+          id?: string
+          is_read?: boolean
+          kind?: string
+          message?: string
+          read_at?: string | null
+          sender_display_name?: string
+          sender_email?: string
+          title?: string
+          transaction_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -502,6 +565,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      format_money: {
+        Args: {
+          p_currency: Database["public"]["Enums"]["currency_code"]
+          p_minor: number
+        }
+        Returns: string
+      }
       fx_max_age: { Args: never; Returns: string }
       fx_rate: {
         Args: {
@@ -582,6 +652,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      mark_notifications_read: { Args: { p_ids?: string[] }; Returns: number }
       preview_conversion: {
         Args: {
           p_amount_minor: number

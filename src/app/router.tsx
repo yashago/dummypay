@@ -4,6 +4,7 @@ import { RegisterPage } from '@/features/auth/pages/RegisterPage'
 import { ProtectedRoute, PublicOnlyRoute } from '@/features/auth/routes'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { HistoryPage } from '@/features/history/HistoryPage'
+import { NotificationsPage } from '@/features/notifications/NotificationsPage'
 import { SettingsPage } from '@/features/profile/SettingsPage'
 import { SendMoneyPage } from '@/features/transfers/SendMoneyPage'
 import { WalletsPage } from '@/features/wallets/WalletsPage'
@@ -30,7 +31,7 @@ export const router = createBrowserRouter([
           { path: 'history', element: <HistoryPage /> },
           { path: 'cards', element: <PlaceholderPage title="Payment Cards" phase={5} /> },
           { path: 'bank-accounts', element: <PlaceholderPage title="Bank Accounts" phase={5} /> },
-          { path: 'notifications', element: <PlaceholderPage title="Notifications" phase={4} /> },
+          { path: 'notifications', element: <NotificationsPage /> },
           { path: 'settings', element: <SettingsPage /> },
         ],
       },

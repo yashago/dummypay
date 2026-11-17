@@ -16,7 +16,7 @@ export default defineConfig({
   // auth is rate-limited, so run one spec at a time.
   workers: 1,
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
+    { name: 'desktop', use: { ...devices['Desktop Chrome'] }, testIgnore: /mobile\.spec\.ts$/ },
     // Mobile runs layout-focused specs only (full flows would double the sign-ins).
     { name: 'mobile', use: { ...devices['Pixel 7'] }, testMatch: /(shell|mobile)\.spec\.ts$/ },
   ],

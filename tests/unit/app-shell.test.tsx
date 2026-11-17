@@ -5,6 +5,8 @@ import { NAV_ITEMS } from '@/app/nav'
 
 // The account menu needs an auth session; it's covered by the E2E tests.
 vi.mock('@/app/UserMenu', () => ({ UserMenu: () => null }))
+vi.mock('@/app/UnreadBadge', () => ({ UnreadBadge: () => null }))
+vi.mock('@/features/notifications/RealtimeListener', () => ({ RealtimeListener: () => null }))
 
 function renderShell() {
   const router = createMemoryRouter([

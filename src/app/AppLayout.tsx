@@ -5,7 +5,9 @@ import { SimulatedBanner } from '@/components/shared/SimulatedBanner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
+import { RealtimeListener } from '@/features/notifications/RealtimeListener'
 import { NAV_ITEMS } from './nav'
+import { UnreadBadge } from './UnreadBadge'
 import { UserMenu } from './UserMenu'
 
 function Brand() {
@@ -39,6 +41,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
         >
           <Icon className="size-4" aria-hidden />
           {label}
+          {to === '/notifications' && <UnreadBadge />}
         </NavLink>
       ))}
     </nav>
@@ -88,6 +91,7 @@ export function AppLayout() {
           <main className="mx-auto w-full max-w-6xl flex-1 p-4 sm:p-6 lg:p-8">
             <Outlet />
           </main>
+          <RealtimeListener />
         </div>
       </div>
     </div>
