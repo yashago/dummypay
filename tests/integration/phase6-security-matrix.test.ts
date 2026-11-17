@@ -8,6 +8,7 @@ import {
   anonClient,
   createTestUser,
   deleteTrackedUsers,
+  SIGN_IN_TIMEOUT_MS,
   signInAs,
   SUPABASE_URL,
   type Client,
@@ -100,7 +101,7 @@ beforeAll(async () => {
   for (const [table, rows] of Object.entries(victimRows)) {
     expect(rows.length, `victim has ${table}`).toBeGreaterThan(0)
   }
-})
+}, SIGN_IN_TIMEOUT_MS)
 
 afterAll(async () => {
   await restoreFx(admin, snapshot)
@@ -161,7 +162,7 @@ describe.each(USER_TABLES)('table %s', (table) => {
 })
 
 describe('internal tables', () => {
-  it.each(['fx_rate_history', 'rate_limits'] as const)('%s is not readable by users', async (table) => {
+  it.each(['fx_rate_history', 'rate_limit_events'] as const)('%s is not readable by users', async (table) => {
     for (const client of [asVictim, asOutsider, anonClient()]) {
       const { data } = await client.from(table).select('*').limit(1)
       expect(data ?? []).toEqual([])

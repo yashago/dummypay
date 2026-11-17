@@ -65,19 +65,33 @@ export async function createTestUser(
   return { id: data.user.id, email, displayName, currency }
 }
 
+/**
+ * Auth allows 30 sign-ins per 5 minutes per IP. On a 429, signInAs waits and
+ * retries; these delays add up to the full 5-minute window, after which a 429
+ * is a real problem and is thrown.
+ */
+const SIGN_IN_RETRY_DELAYS_MS = [30_000, 60_000, 90_000, 120_000]
+
+/**
+ * Timeout for any hook or test that calls signInAs: the worst-case retry wait
+ * plus a minute for the work itself. Without it the default hook (60 s) and
+ * test (30 s) timeouts cut the retries short and the file fails instead.
+ */
+export const SIGN_IN_TIMEOUT_MS = SIGN_IN_RETRY_DELAYS_MS.reduce((a, b) => a + b, 0) + 60_000
+
 /** Signs in as the user, returning a client whose requests carry that user's JWT. */
 export async function signInAs(user: { email: string }): Promise<Client> {
   const client = anonClient()
-  // Auth allows 30 sign-ins per 5 minutes per IP; back off and retry if a full
-  // CI run (integration + E2E) bumps into it.
-  for (let attempt = 1; ; attempt++) {
+  for (let attempt = 0; ; attempt++) {
     const { error } = await client.auth.signInWithPassword({
       email: user.email,
       password: TEST_PASSWORD,
     })
     if (!error) return client
-    if (error.status !== 429 || attempt === 5) throw error
-    await new Promise((r) => setTimeout(r, 30_000 * attempt))
+    const delay = SIGN_IN_RETRY_DELAYS_MS[attempt]
+    if (error.status !== 429 || delay === undefined) throw error
+    console.warn(`[signInAs] Auth rate limit (429); retrying in ${delay / 1000}s`)
+    await new Promise((r) => setTimeout(r, delay))
   }
 }
 

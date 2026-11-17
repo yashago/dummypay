@@ -4,6 +4,7 @@ import {
   anonClient,
   createTestUser,
   deleteTrackedUsers,
+  SIGN_IN_TIMEOUT_MS,
   signInAs,
   SUPABASE_URL,
   type Client,
@@ -16,7 +17,7 @@ let asAlice: Client, asBob: Client
 beforeAll(async () => {
   ;[alice, bob] = await Promise.all([createTestUser('ILS', 'Alice Cards'), createTestUser('USD', 'Bob Banks')])
   ;[asAlice, asBob] = await Promise.all([signInAs(alice), signInAs(bob)])
-})
+}, SIGN_IN_TIMEOUT_MS)
 
 afterAll(async () => {
   await deleteTrackedUsers()
