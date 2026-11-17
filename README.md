@@ -75,6 +75,35 @@ tables have no columns for full card numbers or CVVs. The same validation module
   `npm run fn:deploy`). Auth's site URL is the Vercel URL; localhost stays allowed for development.
 - **Smoke-test a deployment:** `E2E_BASE_URL=https://dummypay.vercel.app npx playwright test`.
 
+## CI/CD (GitHub Actions)
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs three jobs:
+
+| Job | When | What |
+| --- | --- | --- |
+| `checks` | every PR and push to `main` | typecheck, lint, unit tests, build as 4 parallel jobs (no secrets needed) |
+| `deploy-backend` | push to `main` only, after `checks` | `supabase db push` + Edge Functions deploy |
+| `db-tests` | after `checks` (and on `main`, after the deploy) | integration + E2E tests against the hosted project |
+
+The frontend is still deployed by Vercel's GitHub integration. Because the Supabase project is
+shared, the deploy and the test runs each use a non-cancelling concurrency group, so only one
+runs against the project at a time; if a newer run supersedes a queued one, GitHub marks the
+older one cancelled — re-run it if needed. Integration and E2E tests stay sequential (they
+share exchange-rate fixtures and test-user cleanup on the live project); only the Playwright
+browser download overlaps the integration run. In CI the tests get their keys from environment
+variables instead of `.env.test`; `signInAs` backs off and retries on Auth's 429 rate limit.
+
+The values live in the **`DummyPay env`** environment (**Settings → Environments**), which
+`deploy-backend` and `db-tests` declare:
+
+- Variables: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_PROJECT_REF`
+- Secrets: `SUPABASE_SECRET_KEY` (test setup/cleanup), `SUPABASE_ACCESS_TOKEN` (Supabase CLI
+  personal access token for the deploy job)
+
+PRs from forks don't receive secrets, so their `db-tests` job fails at the configuration check.
+If the environment's deployment branches are restricted (e.g. to `main`), `db-tests` can't run
+on PR branches — leave it unrestricted, or move the test values to repository level.
+
 ## Security model
 
 - **Postgres is the only authority over money.** Signed-in users have `SELECT` only on wallets,

@@ -1,0 +1,157 @@
+# DummyPay CI/CD
+#
+#   checks          every PR / push: typecheck, lint, unit tests, build (no secrets)
+#   deploy-backend  push to main only: Supabase migrations + Edge Functions
+#   db-tests        integration + E2E against the hosted Supabase project
+#
+# The hosted project is shared by the live site, development and tests, so the
+# jobs that touch it run one at a time and are never cancelled half-way (a
+# cancelled test run could leave fixture exchange rates behind).
+# Vercel deploys the frontend itself on every push to main.
+#
+# Required configuration, stored in the "DummyPay env" environment
+# (Settings → Environments); deploy-backend and db-tests declare it:
+#   Variables: SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_PROJECT_REF
+#   Secrets:   SUPABASE_SECRET_KEY    (integration/E2E setup and cleanup)
+#              SUPABASE_ACCESS_TOKEN  (CLI: db push / functions deploy)
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# No workflow-level cancellation: cancelling a run mid-way through db-tests
+# could leave fixture exchange rates on the live project.
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  checks:
+    # The four checks run as parallel jobs; `needs: checks` waits for all of them.
+    name: ${{ matrix.task }}
+    strategy:
+      fail-fast: false # report every failing check, not just the first
+      matrix:
+        task: [typecheck, lint, test:unit, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      # Safe to cancel: superseded fast checks on the same PR/branch. The task
+      # is part of the group so the parallel jobs don't cancel each other.
+      group: checks-${{ github.ref }}-${{ matrix.task }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+    env:
+      # Unit tests and the build never call Supabase; placeholders are enough.
+      VITE_SUPABASE_URL: http://localhost:54321
+      VITE_SUPABASE_ANON_KEY: ci-placeholder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run ${{ matrix.task }}
+
+  deploy-backend:
+    name: Deploy Supabase migrations & functions
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: checks
+    runs-on: ubuntu-latest
+    environment: DummyPay env
+    timeout-minutes: 15
+    concurrency:
+      # Own group so a queued test run can never displace a queued deploy.
+      group: supabase-deploy
+      cancel-in-progress: false
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Link project
+        run: npx supabase link --project-ref "$PROJECT_REF"
+      - name: Pending migrations
+        run: npx supabase migration list --remote
+      - name: Apply migrations
+        run: npx supabase db push --remote --yes
+      - name: Deploy Edge Functions
+        run: npx supabase functions deploy --use-api --yes
+
+  db-tests:
+    name: Integration & E2E tests (hosted Supabase)
+    needs: [checks, deploy-backend]
+    # Run after checks; on main also after the backend deploy (skipped on PRs).
+    if: >-
+      ${{ !cancelled() && needs.checks.result == 'success' &&
+          (needs.deploy-backend.result == 'success' || needs.deploy-backend.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    environment: DummyPay env
+    timeout-minutes: 30
+    concurrency:
+      # One test run at a time against the shared project (rate fixture, Auth
+      # rate limit). GitHub keeps only the newest pending run per group, so an
+      # older queued run may show as cancelled — re-run it if needed.
+      group: supabase-db-tests
+      cancel-in-progress: false
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      # Used by the Vite dev server that Playwright starts.
+      VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Check required configuration
+        run: |
+          missing=0
+          for v in SUPABASE_URL SUPABASE_PUBLISHABLE_KEY SUPABASE_SECRET_KEY; do
+            if [ -z "${!v}" ]; then echo "::error::$v is not set in the 'DummyPay env' environment"; missing=1; fi
+          done
+          exit $missing
+      # The browser download doesn't touch Supabase, so it overlaps with the
+      # integration tests. (The two test suites themselves must not overlap:
+      # they share exchange-rate fixtures and test users on the live project.)
+      - name: Start Playwright browser install (background)
+        run: |
+          # `|| code=$?` keeps bash -e from exiting before the exit code is written.
+          ( code=0
+            npx playwright install --with-deps chromium > "$RUNNER_TEMP/pw-install.log" 2>&1 || code=$?
+            echo "$code" > "$RUNNER_TEMP/pw-install.exit" ) &
+      - name: Integration tests
+        run: npm run test:int
+      - name: Wait for Playwright browser install
+        timeout-minutes: 10
+        run: |
+          while [ ! -f "$RUNNER_TEMP/pw-install.exit" ]; do sleep 2; done
+          cat "$RUNNER_TEMP/pw-install.log"
+          exit "$(cat "$RUNNER_TEMP/pw-install.exit")"
+      - name: E2E tests
+        run: npm run test:e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

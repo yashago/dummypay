@@ -68,12 +68,17 @@ export async function createTestUser(
 /** Signs in as the user, returning a client whose requests carry that user's JWT. */
 export async function signInAs(user: { email: string }): Promise<Client> {
   const client = anonClient()
-  const { error } = await client.auth.signInWithPassword({
-    email: user.email,
-    password: TEST_PASSWORD,
-  })
-  if (error) throw error
-  return client
+  // Auth allows 30 sign-ins per 5 minutes per IP; back off and retry if a full
+  // CI run (integration + E2E) bumps into it.
+  for (let attempt = 1; ; attempt++) {
+    const { error } = await client.auth.signInWithPassword({
+      email: user.email,
+      password: TEST_PASSWORD,
+    })
+    if (!error) return client
+    if (error.status !== 429 || attempt === 5) throw error
+    await new Promise((r) => setTimeout(r, 30_000 * attempt))
+  }
 }
 
 export async function deleteTrackedUsers() {
