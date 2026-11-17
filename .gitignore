@@ -1,0 +1,33 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# env
+.env
+.env.*
+!.env.example
+
+# tests
+test-results
+playwright-report
+coverage
+
+# supabase
+supabase/.branches
+supabase/.temp
+supabase/functions/.env
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+
+# local Claude Code settings
+.claude/

@@ -1,0 +1,57 @@
+import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 'react'
+import { createBrowserRouter, Navigate } from 'react-router'
+import { ProtectedRoute, PublicOnlyRoute } from '@/features/auth/routes'
+import { AppLayout } from './AppLayout'
+import { PageFallback } from './PageFallback'
+
+// Each page is its own chunk, loaded on first visit.
+const page = <K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) =>
+  lazy(async () => ({ default: (await load())[name] }))
+
+const LoginPage = page(() => import('@/features/auth/pages/LoginPage'), 'LoginPage')
+const RegisterPage = page(() => import('@/features/auth/pages/RegisterPage'), 'RegisterPage')
+const DashboardPage = page(() => import('@/features/dashboard/DashboardPage'), 'DashboardPage')
+const WalletsPage = page(() => import('@/features/wallets/WalletsPage'), 'WalletsPage')
+const SendMoneyPage = page(() => import('@/features/transfers/SendMoneyPage'), 'SendMoneyPage')
+const HistoryPage = page(() => import('@/features/history/HistoryPage'), 'HistoryPage')
+const CardsPage = page(() => import('@/features/payment-methods/CardsPage'), 'CardsPage')
+const BankAccountsPage = page(() => import('@/features/payment-methods/BankAccountsPage'), 'BankAccountsPage')
+const NotificationsPage = page(() => import('@/features/notifications/NotificationsPage'), 'NotificationsPage')
+const SettingsPage = page(() => import('@/features/profile/SettingsPage'), 'SettingsPage')
+
+function load(Page: LazyExoticComponent<ComponentType>) {
+  return (
+    <Suspense fallback={<PageFallback />}>
+      <Page />
+    </Suspense>
+  )
+}
+
+export const router = createBrowserRouter([
+  {
+    element: <PublicOnlyRoute />,
+    children: [
+      { path: 'login', element: load(LoginPage) },
+      { path: 'register', element: load(RegisterPage) },
+    ],
+  },
+  {
+    element: <ProtectedRoute />,
+    children: [
+      {
+        element: <AppLayout />,
+        children: [
+          { index: true, element: load(DashboardPage) },
+          { path: 'wallets', element: load(WalletsPage) },
+          { path: 'send', element: load(SendMoneyPage) },
+          { path: 'history', element: load(HistoryPage) },
+          { path: 'cards', element: load(CardsPage) },
+          { path: 'bank-accounts', element: load(BankAccountsPage) },
+          { path: 'notifications', element: load(NotificationsPage) },
+          { path: 'settings', element: load(SettingsPage) },
+        ],
+      },
+    ],
+  },
+  { path: '*', element: <Navigate to="/" replace /> },
+])
