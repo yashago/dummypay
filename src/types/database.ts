@@ -277,28 +277,28 @@ export type Database = {
           },
         ]
       }
-      rate_limits: {
+      rate_limit_events: {
         Row: {
           action: string
-          hits: number
+          created_at: string
+          id: number
           user_id: string
-          window_start: string
         }
         Insert: {
           action: string
-          hits?: number
+          created_at?: string
+          id?: never
           user_id: string
-          window_start: string
         }
         Update: {
           action?: string
-          hits?: number
+          created_at?: string
+          id?: never
           user_id?: string
-          window_start?: string
         }
         Relationships: [
           {
-            foreignKeyName: "rate_limits_user_id_fkey"
+            foreignKeyName: "rate_limit_events_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"

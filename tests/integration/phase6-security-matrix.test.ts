@@ -161,7 +161,7 @@ describe.each(USER_TABLES)('table %s', (table) => {
 })
 
 describe('internal tables', () => {
-  it.each(['fx_rate_history', 'rate_limits'] as const)('%s is not readable by users', async (table) => {
+  it.each(['fx_rate_history', 'rate_limit_events'] as const)('%s is not readable by users', async (table) => {
     for (const client of [asVictim, asOutsider, anonClient()]) {
       const { data } = await client.from(table).select('*').limit(1)
       expect(data ?? []).toEqual([])

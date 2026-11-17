@@ -9,8 +9,9 @@ and limitations: [README.md](../README.md).
 ## 2. Current Status
 
 - **Phase:** all six PRD phases are complete and the app is live at https://dummypay.vercel.app.
-  The current work is CI/CD (branch `ci/github-actions`).
-- **Overall:** feature-complete. The CI pipeline has never had a green run on GitHub.
+  CI/CD is merged (PR #5). The current work is the sliding-window rate limit (branch
+  `fix/sliding-window-rate-limit`).
+- **Overall:** feature-complete. CI passes on pull requests.
 - **Last updated:** 2026-11-17
 
 ## 3. Completed Work
@@ -21,36 +22,32 @@ and limitations: [README.md](../README.md).
 | Vercel frontend deployment | PR #2 | Deployed |
 | Password reset | PR #3 | E2E `password-reset.spec.ts` |
 | Recovery from stale chunks after a deploy | PR #4 | Unit and E2E `stale-deploy.spec.ts` |
+| GitHub Actions CI/CD ([ci.yml](../.github/workflows/ci.yml)) | PR #5 | Passed on the PR, as reported by the user |
 
 ## 4. Work in Progress
 
-**GitHub Actions CI/CD**: [.github/workflows/ci.yml](../.github/workflows/ci.yml). Committed and
-pushed (`b82d340`, `2f7be4a`). The pull request has been opened by hand.
+**Sliding-window rate limit**, in migration
+[20261117165311_sliding_window_rate_limit.sql](../supabase/migrations/20261117165311_sliding_window_rate_limit.sql).
+`hit_rate_limit` now logs each allowed call in `rate_limit_events` and counts the calls in the
+trailing window. Before, it counted per clock minute, so a burst across a minute boundary could
+make 2× the limit. The function's signature is unchanged, and the change covers both
+`lookup_recipient` (20 per minute) and `create_transfer_quote` (30 per minute). The old
+`rate_limits` table was dropped.
 
-- Jobs: `checks` (no secrets), `deploy-backend` (pushes to `main` only), `db-tests` (hosted project).
-- `checks` runs typecheck, lint, unit tests and build as 4 parallel matrix jobs. In `db-tests`,
-  the Playwright browser installs in the background while the integration tests run. Neither
-  change has been run on GitHub yet.
-- The first run failed because none of the Supabase values reached the jobs. They are stored in
-  the GitHub environment `DummyPay env`, and the jobs didn't declare it. Fixed in `2f7be4a`; the
-  re-run result is **unverified**.
+- **Already applied to the hosted database (2026-11-17), but not on `main` yet.** Until it's
+  merged, a `deploy-backend` run on `main` will fail on the unknown migration.
 
 ## 5. Known Issues and Blockers
 
-- CI has not passed on GitHub yet (see §4).
-- If `DummyPay env` limits deployment branches (for example to `main`), `db-tests` can't run on
-  pull request branches.
-- `deploy-backend` has never run. The `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` values
-  are untested in CI.
-- `hit_rate_limit` counts calls per fixed clock minute, so a burst that crosses a minute
-  boundary can make up to 2× the limit (for example 40 recipient lookups in a few seconds). The
-  PRD doesn't specify a limit. The rate-limit test now starts at the beginning of a fresh minute
-  (it failed intermittently in CI on 2026-11-17). A sliding-window limit would need a migration;
-  not decided.
+- `deploy-backend` has never run on `main`. The `SUPABASE_ACCESS_TOKEN` and
+  `SUPABASE_PROJECT_REF` values are untested.
+- If `DummyPay env` limits deployment branches, `db-tests` can't run on pull request branches.
+- Possible flake (unconfirmed): `signInAs` waits 30 s, then 60 s and longer after an Auth 429,
+  but the integration hook timeout is 60 s. A rate-limited `beforeAll` can therefore time out.
+  One local file-level failure on 2026-11-17 may have had this cause.
 - React logs "Select is changing from uncontrolled to controlled" warnings during E2E runs. They
   are harmless and haven't been fixed.
-- Other known limitations (password-reset email limits, `npm audit` findings and more) are
-  listed in the README under "Known limitations".
+- Other limitations are listed in the README under "Known limitations".
 
 ## 6. Important Decisions
 
@@ -58,35 +55,36 @@ pushed (`b82d340`, `2f7be4a`). The pull request has been opened by hand.
   not used. Never run `supabase db reset --linked`.
 - All money operations go through Postgres functions. Identity comes only from `auth.uid()`.
 - CI: the jobs that use the hosted project share non-cancelling concurrency groups. Vercel still
-  deploys the frontend. Supabase values live in the `DummyPay env` environment.
+  deploys the frontend. Supabase values live in the `DummyPay env` environment. The `checks` job
+  runs as 4 parallel jobs.
 - **Integration and E2E tests must not overlap** while they share the live project: both swap
   and restore the exchange rates, integration tests make the rates stale on purpose, and the
-  integration setup deletes all `@test.dummypay.dev` users. Real test parallelism would need a
-  separate test project (decided against on 2026-11-17).
-- Tests account for Auth's limit of 30 sign-ins per 5 minutes per IP: users are created through
-  the admin API, `signInAs` retries on a 429, and Playwright retries only once in CI.
+  integration setup deletes all `@test.dummypay.dev` users. A separate test project was decided
+  against (2026-11-17).
+- Rate limits use a sliding window (2026-11-17), not fixed clock windows.
 
 ## 7. Next Steps
 
-1. Check the CI re-run on the `ci/github-actions` pull request. If `db-tests` fails, look at the
-   environment's branch restrictions and the configuration-check step.
-2. Merge, then confirm that `deploy-backend` passes on `main`.
-3. Optional: decide whether to require approval in `DummyPay env` before deploys.
-4. Optional: fix the controlled/uncontrolled Select warnings.
+1. Open and merge the PR for `fix/sliding-window-rate-limit`.
+2. Confirm that `deploy-backend` passes on `main`. It should report the migration as already
+   applied.
+3. Optional: make the `signInAs` waits fit within the hook timeout (see §5).
+4. Optional: decide whether to require approval in `DummyPay env` before deploys.
 
 ## 8. Verification
 
-Local runs on 2026-11-17 with `CI=true` and the CI placeholder env:
+2026-11-17:
 
-- Typecheck, lint and build: passed.
-- Unit tests: 129 of 129 passed.
-- Integration tests: 163 of 163 passed (hosted project).
-- E2E tests: 15 of 15 passed (desktop and mobile).
-- GitHub Actions: the first run failed at the configuration check. The re-run is pending.
+- Local runs with `CI=true` and the CI placeholder env, before the sliding-window change:
+  typecheck, lint and build passed; unit tests 129 of 129, integration tests 163 of 163, E2E
+  tests 15 of 15.
+- After the sliding-window change: typecheck and lint passed.
+  `phase3-transfers.test.ts` passed 43 of 43, including 2 new sliding-window tests.
+  `phase6-security-matrix.test.ts` passed. `supabase db advisors` showed no new findings.
+- GitHub Actions: the PR #5 checks and `db-tests` passed (reported by the user).
 
 ## 9. Important Files
 
+- [supabase/migrations/20261117165311_sliding_window_rate_limit.sql](../supabase/migrations/20261117165311_sliding_window_rate_limit.sql)
+- [tests/integration/phase3-transfers.test.ts](../tests/integration/phase3-transfers.test.ts), [tests/integration/helpers.ts](../tests/integration/helpers.ts)
 - [.github/workflows/ci.yml](../.github/workflows/ci.yml)
-- [tests/integration/helpers.ts](../tests/integration/helpers.ts), [tests/e2e/support.ts](../tests/e2e/support.ts)
-- [playwright.config.ts](../playwright.config.ts)
-- [README.md](../README.md), the "CI/CD (GitHub Actions)" section
