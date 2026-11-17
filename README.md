@@ -107,6 +107,9 @@ tables have no columns for full card numbers or CVVs. The same validation module
   authenticated, exact-match only and limited to 20 lookups per minute.
 - **Account deletion** (admin only — there is no self-service delete) cascades to that account's
   transactions, which also removes them from counterparties' history.
+- **Password-reset emails** use Supabase's built-in email service, which only delivers to members
+  of the Supabase organisation and is limited to a few emails per hour. To let any user reset
+  their password, configure a custom SMTP provider (Supabase → Authentication → Emails → SMTP).
 - **Leaked-password protection** (Supabase Auth, paid plans) is not enabled.
 - **`npm audit`:** 4 moderate findings, all in `minimatch` via the shadcn CLI's code-generation
   tooling (`ts-morph`); it runs only when adding components and is not part of the app bundle.

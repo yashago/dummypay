@@ -14,6 +14,9 @@ const AUTH_MESSAGES: Record<string, string> = {
   over_request_rate_limit: 'Too many attempts. Please wait a few minutes and try again.',
   over_email_send_rate_limit: 'Too many attempts. Please wait a few minutes and try again.',
   signup_disabled: 'Registration is currently disabled.',
+  same_password: 'Choose a password different from your current one.',
+  session_not_found: 'This reset link has expired. Please request a new one.',
+  otp_expired: 'This reset link has expired. Please request a new one.',
 }
 
 export function authErrorMessage(error: MaybeError): string {

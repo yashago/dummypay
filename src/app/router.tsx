@@ -10,6 +10,8 @@ const page = <K extends string>(load: () => Promise<Record<K, ComponentType>>, n
 
 const LoginPage = page(() => import('@/features/auth/pages/LoginPage'), 'LoginPage')
 const RegisterPage = page(() => import('@/features/auth/pages/RegisterPage'), 'RegisterPage')
+const ForgotPasswordPage = page(() => import('@/features/auth/pages/ForgotPasswordPage'), 'ForgotPasswordPage')
+const ResetPasswordPage = page(() => import('@/features/auth/pages/ResetPasswordPage'), 'ResetPasswordPage')
 const DashboardPage = page(() => import('@/features/dashboard/DashboardPage'), 'DashboardPage')
 const WalletsPage = page(() => import('@/features/wallets/WalletsPage'), 'WalletsPage')
 const SendMoneyPage = page(() => import('@/features/transfers/SendMoneyPage'), 'SendMoneyPage')
@@ -33,8 +35,12 @@ export const router = createBrowserRouter([
     children: [
       { path: 'login', element: load(LoginPage) },
       { path: 'register', element: load(RegisterPage) },
+      { path: 'forgot-password', element: load(ForgotPasswordPage) },
     ],
   },
+  // Reached from the emailed link, which signs the user in for recovery — so it
+  // sits outside both the public-only and the protected guards.
+  { path: 'reset-password', element: load(ResetPasswordPage) },
   {
     element: <ProtectedRoute />,
     children: [

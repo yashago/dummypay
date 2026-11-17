@@ -1,4 +1,9 @@
-import { loginSchema, registerSchema } from '@/features/auth/schemas'
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  registerSchema,
+  resetPasswordSchema,
+} from '@/features/auth/schemas'
 import { authErrorMessage } from '@/lib/errors'
 
 const valid = {
@@ -35,6 +40,20 @@ describe('loginSchema', () => {
     expect(loginSchema.safeParse({ email: 'a@b.co', password: 'x' }).success).toBe(true)
     expect(loginSchema.safeParse({ email: 'nope', password: 'x' }).success).toBe(false)
     expect(loginSchema.safeParse({ email: 'a@b.co', password: '' }).success).toBe(false)
+  })
+})
+
+describe('password reset schemas', () => {
+  it('normalises the email for reset requests', () => {
+    expect(forgotPasswordSchema.parse({ email: ' Dana@Example.COM ' })).toEqual({ email: 'dana@example.com' })
+    expect(forgotPasswordSchema.safeParse({ email: 'nope' }).success).toBe(false)
+  })
+
+  it('applies the same password rules as registration', () => {
+    expect(resetPasswordSchema.safeParse({ password: 'secret-123', confirmPassword: 'secret-123' }).success).toBe(true)
+    expect(resetPasswordSchema.safeParse({ password: 'short', confirmPassword: 'short' }).success).toBe(false)
+    const mismatch = resetPasswordSchema.safeParse({ password: 'secret-123', confirmPassword: 'secret-124' })
+    expect(mismatch.error!.issues[0].path).toEqual(['confirmPassword'])
   })
 })
 

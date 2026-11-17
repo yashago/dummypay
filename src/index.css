@@ -63,7 +63,7 @@
     --muted-foreground: oklch(0.5 0 0); /* darkened from 0.556 for WCAG AA contrast on bg-muted */
     --accent: oklch(0.97 0 0);
     --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
+    --destructive: oklch(0.5 0.21 27.325); /* darkened from 0.577 for WCAG AA contrast (alerts use it at 90% opacity) */
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
     --ring: oklch(0.6 0.14 260);

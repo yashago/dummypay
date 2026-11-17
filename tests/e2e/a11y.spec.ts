@@ -32,6 +32,12 @@ test.describe('Accessibility (axe, WCAG 2.1 AA)', () => {
     await page.goto('/register')
     await expect(page.getByRole('button', { name: 'Create account' })).toBeVisible()
     await expectAccessible(page, 'Register')
+    await page.goto('/forgot-password')
+    await expect(page.getByRole('button', { name: 'Send reset link' })).toBeVisible()
+    await expectAccessible(page, 'Forgot password')
+    await page.goto('/reset-password')
+    await expect(page.getByText('This link is invalid or has expired.')).toBeVisible()
+    await expectAccessible(page, 'Reset password (invalid link)')
   })
 
   test('every signed-in section', async ({ page }) => {
