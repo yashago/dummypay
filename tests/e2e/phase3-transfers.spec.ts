@@ -47,7 +47,7 @@ test.describe('Phase 3 — send money & transaction history', () => {
     await card.getByRole('button', { name: 'Continue' }).click()
 
     // Amount: "Recipient gets $100"
-    await page.getByRole('tab', { name: 'Recipient gets' }).click()
+    await page.getByRole('radio', { name: 'Recipient gets' }).click()
     await page.getByLabel(/Amount they receive \(USD\)/).fill('100')
     await page.getByRole('button', { name: 'Review transfer' }).click()
 

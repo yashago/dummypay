@@ -82,7 +82,9 @@ export function RecipientStep({ initial, onContinue }: Props) {
         <div className="space-y-4" data-testid="recipient-card">
           <div className="flex items-center gap-3 rounded-lg border bg-muted/40 p-4">
             <Avatar className="size-10">
-              <AvatarFallback>{found.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarFallback className="bg-primary text-primary-foreground" aria-hidden>
+                {found.displayName.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-1.5 font-medium">

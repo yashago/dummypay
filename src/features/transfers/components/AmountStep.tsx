@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SegmentedControl } from '@/components/shared/SegmentedControl'
 import { rpcErrorMessage } from '@/lib/errors'
 import { formatMoney, parseAmountToMinor, type CurrencyCode } from '@/lib/money'
 import {
@@ -92,12 +92,16 @@ export function AmountStep({ recipient, wallets, onBack, onQuoted }: Props) {
         </FieldDescription>
       </Field>
 
-      <Tabs value={side} onValueChange={(v) => setSide(v as AmountSide)}>
-        <TabsList className="w-full">
-          <TabsTrigger value="send">I send</TabsTrigger>
-          <TabsTrigger value="receive">Recipient gets</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <SegmentedControl
+        label="Amount is"
+        className="w-full"
+        value={side}
+        onChange={setSide}
+        options={[
+          { value: 'send', label: 'I send' },
+          { value: 'receive', label: 'Recipient gets' },
+        ]}
+      />
 
       <Field data-invalid={!!inputError}>
         <FieldLabel htmlFor="transfer-amount">

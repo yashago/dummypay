@@ -62,6 +62,44 @@ digits, expiry and a random `tok_sim_…` token; bank identifiers masked (`GB•
 tables have no columns for full card numbers or CVVs. The same validation module
 (`supabase/functions/_shared/payment-validation.ts`) runs in the browser for instant feedback.
 
+## Security model
+
+- **Postgres is the only authority over money.** Signed-in users have `SELECT` only on wallets,
+  transactions, quotes and notifications; every write goes through a vetted function. Row Level
+  Security is enabled on every table.
+- **Identity comes from the session.** Functions use `auth.uid()`; none accepts a user id. Edge
+  Functions verify the JWT and ignore any `user_id` in the body.
+- **Elevated-privilege surface (SECURITY DEFINER), all deliberate:** `add_wallet`,
+  `set_preferred_currency`, `lookup_recipient`, `create_transfer_quote`, `execute_transfer`,
+  `mark_notifications_read`. Each pins `search_path = ''` and is not executable by `anon`. These
+  six are the only findings from `npx supabase db advisors --remote`.
+- **Transfers** lock the quote and both wallets (`FOR UPDATE`, wallet-id order), re-check the
+  balance under lock, and are idempotent per `(sender, idempotency_key)`; quotes are single-use and
+  expire after 60s. `CHECK (balance_minor >= 0)` and an immutability trigger on transactions are
+  the last line of defence.
+- **Secrets:** only the publishable key ships to the browser. The secret key lives in
+  `.env.test` (tests only) and the Edge Function environment; the FX key only in Edge Function
+  secrets.
+- Tests: `tests/integration/phase6-security-matrix.test.ts` probes every table and function as an
+  outsider and as an anonymous visitor; `tests/e2e/a11y.spec.ts` scans every page with axe
+  (WCAG 2.1 AA, fails on serious/critical issues).
+
+## Known limitations & before going to production
+
+- **Exchange-rate key:** live rates need `EXCHANGERATE_API_KEY` set as an Edge Function secret
+  (see above). Until then conversions and cross-currency transfers are paused; same-currency
+  transfers still work.
+- **Shared project:** development and automated tests use one Supabase project. Use a separate
+  project for production.
+- **Recipient lookup reveals whether an email is registered** (inherent to the spec); it is
+  authenticated, exact-match only and limited to 20 lookups per minute.
+- **Account deletion** (admin only — there is no self-service delete) cascades to that account's
+  transactions, which also removes them from counterparties' history.
+- **Hosting:** serve over HTTPS with a Content-Security-Policy restricting `connect-src` to the
+  Supabase project URL. Consider enabling Supabase Auth's leaked-password protection (paid plans).
+- **`npm audit`:** 4 moderate findings, all in `minimatch` via the shadcn CLI's code-generation
+  tooling (`ts-morph`); it runs only when adding components and is not part of the app bundle.
+
 ## Scripts
 
 | Script | Purpose |

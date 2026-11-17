@@ -3,11 +3,11 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { SegmentedControl } from '@/components/shared/SegmentedControl'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useMarkNotificationsRead, useNotifications, useUnreadCount } from './api'
 import { NotificationItem } from './components/NotificationItem'
 
@@ -32,12 +32,16 @@ export function NotificationsPage() {
         }
       />
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as 'all' | 'unread')} className="mb-4">
-        <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="unread">Unread{unread.data ? ` (${unread.data})` : ''}</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <SegmentedControl
+        label="Show notifications"
+        className="mb-4"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: 'all', label: 'All' },
+          { value: 'unread', label: `Unread${unread.data ? ` (${unread.data})` : ''}` },
+        ]}
+      />
 
       <Card>
         <CardContent>
