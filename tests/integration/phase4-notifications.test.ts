@@ -7,6 +7,7 @@ import {
   anonClient,
   createTestUser,
   deleteTrackedUsers,
+  SIGN_IN_TIMEOUT_MS,
   signInAs,
   type Client,
   type TestUser,
@@ -26,7 +27,7 @@ beforeAll(async () => {
     createTestUser('EUR', 'Carol Outsider'),
   ])
   ;[asAlice, asBob, asCarol] = await Promise.all([signInAs(alice), signInAs(bob), signInAs(carol)])
-})
+}, SIGN_IN_TIMEOUT_MS)
 
 afterAll(async () => {
   await Promise.all(channels.map((c) => c.unsubscribe()))

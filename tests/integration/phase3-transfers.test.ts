@@ -7,6 +7,7 @@ import {
   anonClient,
   createTestUser,
   deleteTrackedUsers,
+  SIGN_IN_TIMEOUT_MS,
   signInAs,
   type Client,
   type TestUser,
@@ -27,7 +28,7 @@ beforeAll(async () => {
     createTestUser('EUR', 'Carol Outsider'),
   ])
   ;[asAlice, asBob, asCarol] = await Promise.all([signInAs(alice), signInAs(bob), signInAs(carol)])
-})
+}, SIGN_IN_TIMEOUT_MS)
 
 afterAll(async () => {
   await restoreFx(admin, snapshot)
@@ -144,7 +145,7 @@ describe('Recipient lookup', () => {
     expect(error).not.toBeNull()
   })
 
-  it('is rate limited (20/min), counting failed probes too', async () => {
+  it('is rate limited (20/min), counting failed probes too', { timeout: SIGN_IN_TIMEOUT_MS }, async () => {
     const prober = await createTestUser('USD', 'Prober')
     const asProber = await signInAs(prober)
     const results = []
@@ -168,7 +169,7 @@ describe('Recipient lookup', () => {
     if (error) throw error
   }
 
-  it('counts hits from the trailing minute, even across a clock-minute boundary', async () => {
+  it('counts hits from the trailing minute, even across a clock-minute boundary', { timeout: SIGN_IN_TIMEOUT_MS }, async () => {
     const prober = await createTestUser('USD', 'Prober')
     const asProber = await signInAs(prober)
     await seedLookupHits(prober.id, 20, 30)
@@ -176,7 +177,7 @@ describe('Recipient lookup', () => {
     expect(error?.message).toMatch(/^RATE_LIMITED/)
   })
 
-  it('stops counting hits once they are older than the window', async () => {
+  it('stops counting hits once they are older than the window', { timeout: SIGN_IN_TIMEOUT_MS }, async () => {
     const prober = await createTestUser('USD', 'Prober')
     const asProber = await signInAs(prober)
     await seedLookupHits(prober.id, 20, 90)
@@ -337,7 +338,7 @@ describe('Transfer execution', () => {
     expect((await execute(anonClient(), randomUUID())).error).not.toBeNull()
   })
 
-  it('re-checks the balance at execution time (insufficient funds)', async () => {
+  it('re-checks the balance at execution time (insufficient funds)', { timeout: SIGN_IN_TIMEOUT_MS }, async () => {
     const poor = await createTestUser('USD', 'Poor Sender')
     const asPoor = await signInAs(poor)
     const { data: q1 } = await quote(asPoor, bob.id, 'USD', 400_000)
@@ -406,7 +407,7 @@ describe('Idempotency', () => {
 
 // ---------------------------------------------------------------------------
 describe('Concurrency', () => {
-  it('parallel transfers can never overdraw a wallet', async () => {
+  it('parallel transfers can never overdraw a wallet', { timeout: SIGN_IN_TIMEOUT_MS }, async () => {
     const spender = await createTestUser('USD', 'Concurrent Spender') // $5,000
     const asSpender = await signInAs(spender)
     // 8 quotes of $1,000 each — each individually affordable, together not.
@@ -428,7 +429,7 @@ describe('Concurrency', () => {
     await reconcile(spender.id)
   })
 
-  it('opposite-direction transfers run concurrently without deadlocks or lost updates', async () => {
+  it('opposite-direction transfers run concurrently without deadlocks or lost updates', { timeout: SIGN_IN_TIMEOUT_MS }, async () => {
     const [x, y] = await Promise.all([createTestUser('USD', 'Storm X'), createTestUser('USD', 'Storm Y')])
     const [asX, asY] = await Promise.all([signInAs(x), signInAs(y)])
     const make = async (c: Client, to: string) => (await quote(c, to, 'USD', 1_000)).data!.quote_id!

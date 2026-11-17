@@ -4,6 +4,7 @@ import {
   anonClient,
   createTestUser,
   deleteTrackedUsers,
+  SIGN_IN_TIMEOUT_MS,
   signInAs,
   testEmail,
   TEST_PASSWORD,
@@ -140,7 +141,7 @@ describe('Authorization & data isolation', () => {
       createTestUser('USD', 'Bob Test'),
     ])
     asAlice = await signInAs(alice)
-  })
+  }, SIGN_IN_TIMEOUT_MS)
 
   it('a user sees only their own profile', async () => {
     const { data: all } = await asAlice.from('profiles').select('id')

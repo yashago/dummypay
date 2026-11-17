@@ -8,6 +8,7 @@ import {
   anonClient,
   createTestUser,
   deleteTrackedUsers,
+  SIGN_IN_TIMEOUT_MS,
   signInAs,
   SUPABASE_URL,
   type Client,
@@ -100,7 +101,7 @@ beforeAll(async () => {
   for (const [table, rows] of Object.entries(victimRows)) {
     expect(rows.length, `victim has ${table}`).toBeGreaterThan(0)
   }
-})
+}, SIGN_IN_TIMEOUT_MS)
 
 afterAll(async () => {
   await restoreFx(admin, snapshot)

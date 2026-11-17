@@ -5,6 +5,7 @@ import {
   anonClient,
   createTestUser,
   deleteTrackedUsers,
+  SIGN_IN_TIMEOUT_MS,
   signInAs,
   type Client,
   type TestUser,
@@ -19,7 +20,7 @@ beforeAll(async () => {
   await seedFixtureRates(admin)
   user = await createTestUser('ILS', 'Fx Tester')
   asUser = await signInAs(user)
-})
+}, SIGN_IN_TIMEOUT_MS)
 
 afterAll(async () => {
   await restoreFx(admin, snapshot)

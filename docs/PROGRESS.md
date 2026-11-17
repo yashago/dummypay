@@ -42,9 +42,6 @@ make 2× the limit. The function's signature is unchanged, and the change covers
 - `deploy-backend` has never run on `main`. The `SUPABASE_ACCESS_TOKEN` and
   `SUPABASE_PROJECT_REF` values are untested.
 - If `DummyPay env` limits deployment branches, `db-tests` can't run on pull request branches.
-- Possible flake (unconfirmed): `signInAs` waits 30 s, then 60 s and longer after an Auth 429,
-  but the integration hook timeout is 60 s. A rate-limited `beforeAll` can therefore time out.
-  One local file-level failure on 2026-11-17 may have had this cause.
 - React logs "Select is changing from uncontrolled to controlled" warnings during E2E runs. They
   are harmless and haven't been fixed.
 - Other limitations are listed in the README under "Known limitations".
@@ -62,14 +59,16 @@ make 2× the limit. The function's signature is unchanged, and the change covers
   integration setup deletes all `@test.dummypay.dev` users. A separate test project was decided
   against (2026-11-17).
 - Rate limits use a sliding window (2026-11-17), not fixed clock windows.
+- On an Auth 429, `signInAs` retries after 30, 60, 90 and 120 s, covering the full 5-minute
+  window. Every hook and test that calls it uses `SIGN_IN_TIMEOUT_MS` (6 min), so retries aren't
+  cut off by the default 60 s hook or 30 s test timeouts. Other tests keep the 30 s limit.
 
 ## 7. Next Steps
 
 1. Open and merge the PR for `fix/sliding-window-rate-limit`.
 2. Confirm that `deploy-backend` passes on `main`. It should report the migration as already
    applied.
-3. Optional: make the `signInAs` waits fit within the hook timeout (see §5).
-4. Optional: decide whether to require approval in `DummyPay env` before deploys.
+3. Optional: decide whether to require approval in `DummyPay env` before deploys.
 
 ## 8. Verification
 
@@ -81,6 +80,9 @@ make 2× the limit. The function's signature is unchanged, and the change covers
 - After the sliding-window change: typecheck and lint passed.
   `phase3-transfers.test.ts` passed 43 of 43, including 2 new sliding-window tests.
   `phase6-security-matrix.test.ts` passed. `supabase db advisors` showed no new findings.
+- After the `signInAs` timeout fix: a temporary probe used up the sign-in limit on purpose, and
+  `signInAs` recovered from the 429 inside a `beforeAll` within `SIGN_IN_TIMEOUT_MS`. The full
+  integration suite then passed: 165 of 165.
 - GitHub Actions: the PR #5 checks and `db-tests` passed (reported by the user).
 
 ## 9. Important Files
