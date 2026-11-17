@@ -17,7 +17,7 @@
     "jsx": "react-jsx",
 
     /* Path alias */
-    "paths": { "@/*": ["./src/*"] },
+    "paths": { "@/*": ["./src/*"], "@shared/*": ["./supabase/functions/_shared/*"] },
 
     /* Linting */
     "strict": true,

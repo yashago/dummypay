@@ -5,11 +5,13 @@ import { ProtectedRoute, PublicOnlyRoute } from '@/features/auth/routes'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { HistoryPage } from '@/features/history/HistoryPage'
 import { NotificationsPage } from '@/features/notifications/NotificationsPage'
+import { BankAccountsPage } from '@/features/payment-methods/BankAccountsPage'
+import { CardsPage } from '@/features/payment-methods/CardsPage'
 import { SettingsPage } from '@/features/profile/SettingsPage'
 import { SendMoneyPage } from '@/features/transfers/SendMoneyPage'
 import { WalletsPage } from '@/features/wallets/WalletsPage'
 import { AppLayout } from './AppLayout'
-import { PlaceholderPage } from './PlaceholderPage'
+
 
 export const router = createBrowserRouter([
   {
@@ -29,8 +31,8 @@ export const router = createBrowserRouter([
           { path: 'wallets', element: <WalletsPage /> },
           { path: 'send', element: <SendMoneyPage /> },
           { path: 'history', element: <HistoryPage /> },
-          { path: 'cards', element: <PlaceholderPage title="Payment Cards" phase={5} /> },
-          { path: 'bank-accounts', element: <PlaceholderPage title="Bank Accounts" phase={5} /> },
+          { path: 'cards', element: <CardsPage /> },
+          { path: 'bank-accounts', element: <BankAccountsPage /> },
           { path: 'notifications', element: <NotificationsPage /> },
           { path: 'settings', element: <SettingsPage /> },
         ],

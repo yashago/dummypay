@@ -53,6 +53,15 @@ npm run fn:deploy                                           # after changing fun
 - Cross rates are derived in Postgres `numeric`; conversions round half-up to the minor unit.
 - A rate whose provider timestamp is older than 26h is treated as unavailable for conversions.
 
+## Simulated payment methods
+
+Cards and bank accounts are added through the `add-payment-card` and `add-bank-account` Edge
+Functions. They validate the full input (Luhn, brand/length, MM/YY expiry, CVV; IBAN country length
+and mod-97, or a 4–20 digit account number) and store only what is safe: card brand, last four
+digits, expiry and a random `tok_sim_…` token; bank identifiers masked (`GB•• •••• 5432`). The
+tables have no columns for full card numbers or CVVs. The same validation module
+(`supabase/functions/_shared/payment-validation.ts`) runs in the browser for instant feedback.
+
 ## Scripts
 
 | Script | Purpose |

@@ -432,3 +432,11 @@ enabled = true
 enabled = true
 # The function verifies the caller's JWT itself (supports the new asymmetric signing keys).
 verify_jwt = false
+
+[functions.add-payment-card]
+enabled = true
+verify_jwt = false  # verified in the function (supports asymmetric signing keys)
+
+[functions.add-bank-account]
+enabled = true
+verify_jwt = false  # verified in the function (supports asymmetric signing keys)

@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_accounts: {
+        Row: {
+          account_holder_name: string
+          bank_name: string
+          country: string
+          created_at: string
+          currency: Database["public"]["Enums"]["currency_code"]
+          id: string
+          identifier_type: string
+          masked_account_identifier: string
+          user_id: string
+        }
+        Insert: {
+          account_holder_name: string
+          bank_name: string
+          country: string
+          created_at?: string
+          currency: Database["public"]["Enums"]["currency_code"]
+          id?: string
+          identifier_type: string
+          masked_account_identifier: string
+          user_id: string
+        }
+        Update: {
+          account_holder_name?: string
+          bank_name?: string
+          country?: string
+          created_at?: string
+          currency?: Database["public"]["Enums"]["currency_code"]
+          id?: string
+          identifier_type?: string
+          masked_account_identifier?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fx_rate_history: {
         Row: {
           currency: Database["public"]["Enums"]["currency_code"]
@@ -150,6 +194,50 @@ export type Database = {
           },
           {
             foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_cards: {
+        Row: {
+          card_brand: string
+          cardholder_name: string
+          created_at: string
+          expiration_month: number
+          expiration_year: number
+          id: string
+          last_four_digits: string
+          mock_card_token: string
+          user_id: string
+        }
+        Insert: {
+          card_brand: string
+          cardholder_name: string
+          created_at?: string
+          expiration_month: number
+          expiration_year: number
+          id?: string
+          last_four_digits: string
+          mock_card_token: string
+          user_id: string
+        }
+        Update: {
+          card_brand?: string
+          cardholder_name?: string
+          created_at?: string
+          expiration_month?: number
+          expiration_year?: number
+          id?: string
+          last_four_digits?: string
+          mock_card_token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_cards_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"

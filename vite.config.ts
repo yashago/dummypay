@@ -9,7 +9,11 @@ import { defineConfig, loadEnv } from 'vite'
 // Normalising the drive letter keeps every resolved path consistent. The npm test
 // scripts go through scripts/vitest.mjs, which also starts Vitest from the normalised cwd.
 const root = import.meta.dirname.replace(/^[a-z]:/, (d) => d.toUpperCase())
-const alias = { '@': path.resolve(root, './src') }
+const alias = {
+  '@': path.resolve(root, './src'),
+  // Pure validation shared with Edge Functions (no Deno APIs).
+  '@shared': path.resolve(root, './supabase/functions/_shared'),
+}
 
 // https://vite.dev/config/
 export default defineConfig({
