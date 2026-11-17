@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { CURRENCY_NAMES } from '@/lib/money'
 import { useProfile, useUpdateDisplayName } from './api'
+import { PreferredCurrencyCard } from './components/PreferredCurrencyCard'
 
 const schema = z.object({
   displayName: z
@@ -115,6 +116,8 @@ export function SettingsPage() {
             </form>
           </CardContent>
         </Card>
+
+        <PreferredCurrencyCard key={p.preferred_currency} current={p.preferred_currency} />
       </div>
     </>
   )

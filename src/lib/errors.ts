@@ -27,11 +27,29 @@ export function authErrorMessage(error: MaybeError): string {
   return 'Something went wrong. Please try again.'
 }
 
-export function genericErrorMessage(error: unknown): string {
+/** Stable error codes raised by our Postgres functions (`raise exception 'CODE: ...'`). */
+const RPC_MESSAGES: Record<string, string> = {
+  NOT_AUTHENTICATED: 'Your session has expired. Please sign in again.',
+  INVALID_AMOUNT: 'Enter an amount between 0.01 and 1,000,000.00.',
+  INVALID_CURRENCY: 'Choose a supported currency.',
+  WALLET_EXISTS: 'You already have a wallet in this currency.',
+  RATE_UNAVAILABLE: 'Exchange rates are currently unavailable. Please try again later.',
+  RATE_STALE: 'Exchange rates are out of date. Please try again shortly.',
+}
+
+/** Extracts the leading CODE from a Postgres function error, if any. */
+export function rpcErrorCode(error: unknown): string | null {
   if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
-    // PostgREST errors raised by our own functions start with a stable CODE.
-    const code = /^([A-Z_]{3,})\b/.exec(error.message)?.[1]
-    if (code) return code.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase())
+    return /^([A-Z][A-Z_]{2,})\b/.exec(error.message)?.[1] ?? null
   }
+  return null
+}
+
+export function rpcErrorMessage(error: unknown, overrides: Record<string, string> = {}): string {
+  const code = rpcErrorCode(error)
+  if (code === 'INVALID_AMOUNT' && error && typeof error === 'object' && 'message' in error) {
+    if (/too small/.test(String(error.message))) return 'Amount is too small to convert.'
+  }
+  if (code && (overrides[code] ?? RPC_MESSAGES[code])) return overrides[code] ?? RPC_MESSAGES[code]
   return 'Something went wrong. Please try again.'
 }

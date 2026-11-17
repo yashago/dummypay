@@ -45,6 +45,11 @@ export function formatMoney(minor: number, currency: CurrencyCode, locale = 'en-
   }).format(decimal as unknown as number)
 }
 
+/** Display an exchange rate (server-computed) with up to 6 significant decimals. */
+export function formatRate(rate: number): string {
+  return rate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })
+}
+
 export type ParseResult = { ok: true; minor: number } | { ok: false; error: string }
 
 /**

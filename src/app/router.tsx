@@ -4,6 +4,7 @@ import { RegisterPage } from '@/features/auth/pages/RegisterPage'
 import { ProtectedRoute, PublicOnlyRoute } from '@/features/auth/routes'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { SettingsPage } from '@/features/profile/SettingsPage'
+import { WalletsPage } from '@/features/wallets/WalletsPage'
 import { AppLayout } from './AppLayout'
 import { PlaceholderPage } from './PlaceholderPage'
 
@@ -22,7 +23,7 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { index: true, element: <DashboardPage /> },
-          { path: 'wallets', element: <PlaceholderPage title="Wallets" phase={2} /> },
+          { path: 'wallets', element: <WalletsPage /> },
           { path: 'send', element: <PlaceholderPage title="Send Money" phase={3} /> },
           { path: 'history', element: <PlaceholderPage title="Transaction History" phase={3} /> },
           { path: 'cards', element: <PlaceholderPage title="Payment Cards" phase={5} /> },

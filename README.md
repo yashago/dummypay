@@ -37,6 +37,22 @@ are server-side secrets and must never appear in frontend code.
 > themselves. Auth sign-in/sign-up is rate-limited to 30 per 5 minutes per IP, so tests reuse
 > a small pool of users.
 
+## Exchange rates
+
+Rates come from [ExchangeRate-API](https://www.exchangerate-api.com/) through the `fx-refresh`
+Edge Function, so the API key never reaches the browser:
+
+```bash
+npx supabase secrets set EXCHANGERATE_API_KEY=<your key>   # once
+npm run fn:deploy                                           # after changing functions
+```
+
+- The app calls `fx-refresh` when its rates are more than an hour old; the function contacts the
+  provider at most once every 30 minutes (atomic claim in Postgres) and keeps the previous rates
+  if the provider fails or returns anything invalid.
+- Cross rates are derived in Postgres `numeric`; conversions round half-up to the minor unit.
+- A rate whose provider timestamp is older than 26h is treated as unavailable for conversions.
+
 ## Scripts
 
 | Script | Purpose |

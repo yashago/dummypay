@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      fx_rate_history: {
+        Row: {
+          currency: Database["public"]["Enums"]["currency_code"]
+          fetched_at: string
+          id: number
+          provider: string
+          provider_updated_at: string
+          units_per_usd: number
+        }
+        Insert: {
+          currency: Database["public"]["Enums"]["currency_code"]
+          fetched_at?: string
+          id?: never
+          provider: string
+          provider_updated_at: string
+          units_per_usd: number
+        }
+        Update: {
+          currency?: Database["public"]["Enums"]["currency_code"]
+          fetched_at?: string
+          id?: never
+          provider?: string
+          provider_updated_at?: string
+          units_per_usd?: number
+        }
+        Relationships: []
+      }
+      fx_rates: {
+        Row: {
+          currency: Database["public"]["Enums"]["currency_code"]
+          fetched_at: string
+          provider: string
+          provider_updated_at: string
+          units_per_usd: number
+        }
+        Insert: {
+          currency: Database["public"]["Enums"]["currency_code"]
+          fetched_at?: string
+          provider: string
+          provider_updated_at: string
+          units_per_usd: number
+        }
+        Update: {
+          currency?: Database["public"]["Enums"]["currency_code"]
+          fetched_at?: string
+          provider?: string
+          provider_updated_at?: string
+          units_per_usd?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fx_rates_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: true
+            referencedRelation: "supported_currencies"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      fx_status: {
+        Row: {
+          id: boolean
+          last_attempt_at: string | null
+          last_error: string | null
+          last_success_at: string | null
+        }
+        Insert: {
+          id?: boolean
+          last_attempt_at?: string | null
+          last_error?: string | null
+          last_success_at?: string | null
+        }
+        Update: {
+          id?: boolean
+          last_attempt_at?: string | null
+          last_error?: string | null
+          last_success_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -206,10 +286,124 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      fx_cross_rates: {
+        Row: {
+          fetched_at: string | null
+          from_currency: Database["public"]["Enums"]["currency_code"] | null
+          provider: string | null
+          provider_updated_at: string | null
+          rate: number | null
+          to_currency: Database["public"]["Enums"]["currency_code"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fx_rates_currency_fkey"
+            columns: ["from_currency"]
+            isOneToOne: true
+            referencedRelation: "supported_currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "fx_rates_currency_fkey"
+            columns: ["to_currency"]
+            isOneToOne: true
+            referencedRelation: "supported_currencies"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      add_wallet: {
+        Args: { p_currency: Database["public"]["Enums"]["currency_code"] }
+        Returns: {
+          balance_minor: number
+          created_at: string
+          currency: Database["public"]["Enums"]["currency_code"]
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "wallets"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      claim_fx_refresh: { Args: { p_min_interval: string }; Returns: boolean }
+      convert_minor: {
+        Args: {
+          p_amount: number
+          p_rate: number
+          p_side: Database["public"]["Enums"]["amount_side"]
+        }
+        Returns: number
+      }
+      fx_max_age: { Args: never; Returns: string }
+      fx_rate: {
+        Args: {
+          p_from: Database["public"]["Enums"]["currency_code"]
+          p_to: Database["public"]["Enums"]["currency_code"]
+        }
+        Returns: {
+          provider: string
+          provider_updated_at: string
+          rate: number
+        }[]
+      }
+      get_wallet_summary: {
+        Args: never
+        Returns: {
+          preferred_currency: Database["public"]["Enums"]["currency_code"]
+          rates_as_of: string
+          rates_stale: boolean
+          total_minor: number
+          wallet_count: number
+        }[]
+      }
+      ingest_fx_rates: {
+        Args: {
+          p_provider: string
+          p_provider_updated_at: string
+          p_rates: Json
+        }
+        Returns: undefined
+      }
+      preview_conversion: {
+        Args: {
+          p_amount_minor: number
+          p_from: Database["public"]["Enums"]["currency_code"]
+          p_side?: Database["public"]["Enums"]["amount_side"]
+          p_to: Database["public"]["Enums"]["currency_code"]
+        }
+        Returns: {
+          rate: number
+          rate_provider_updated_at: string
+          receiving_amount_minor: number
+          receiving_currency: Database["public"]["Enums"]["currency_code"]
+          sending_amount_minor: number
+          sending_currency: Database["public"]["Enums"]["currency_code"]
+        }[]
+      }
+      record_fx_failure: { Args: { p_error: string }; Returns: undefined }
+      require_user: { Args: never; Returns: string }
+      set_preferred_currency: {
+        Args: { p_currency: Database["public"]["Enums"]["currency_code"] }
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          preferred_currency: Database["public"]["Enums"]["currency_code"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       amount_side: "send" | "receive"
