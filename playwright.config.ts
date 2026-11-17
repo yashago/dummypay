@@ -7,7 +7,9 @@ const remoteBaseUrl = process.env.E2E_BASE_URL
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false,
-  retries: process.env.CI ? 2 : 0,
+  // One retry in CI absorbs network blips; more would multiply sign-ins
+  // against the Auth rate limit.
+  retries: process.env.CI ? 1 : 0,
   reporter: 'list',
   // Tests talk to the hosted Supabase project over the network.
   expect: { timeout: 10_000 },

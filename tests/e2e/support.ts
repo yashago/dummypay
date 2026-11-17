@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto'
+import { existsSync } from 'node:fs'
 import type { Page } from '@playwright/test'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../src/types/database'
 
-process.loadEnvFile('.env.test')
+// Locally the keys come from .env.test; in CI they are provided as env vars.
+if (existsSync('.env.test')) process.loadEnvFile('.env.test')
 
 export const TEST_PASSWORD = 'Test-password-123!'
 
