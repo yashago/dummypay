@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test Report</title>
+<style>/*__STYLES__*/</style>
+</head>
+<body>
+<main>
+  <header class="header">
+    <div>
+      <h1 id="title">Test Report</h1>
+      <div class="meta" id="meta"></div>
+    </div>
+    <div class="header-actions">
+      <span class="pill" id="status"></span>
+      <button type="button" id="theme" title="Switch theme">Theme: auto</button>
+    </div>
+  </header>
+
+  <div id="banners"></div>
+
+  <section class="summary">
+    <div class="cards" id="cards"></div>
+    <div class="card chart">
+      <svg viewBox="0 0 42 42" role="img" id="donut"></svg>
+      <div class="legend" id="legend"></div>
+    </div>
+  </section>
+
+  <div class="card toolbar" role="toolbar" aria-label="Filter tests">
+    <div class="chips" id="chips"></div>
+    <input class="search" id="search" type="search" placeholder="Search tests, suites, files…" aria-label="Search tests">
+    <select id="sort" aria-label="Sort">
+      <option value="default">Original order</option>
+      <option value="slow">Slowest first</option>
+      <option value="fast">Fastest first</option>
+    </select>
+    <button type="button" id="expand">Expand all</button>
+    <button type="button" id="collapse">Collapse all</button>
+  </div>
+
+  <p class="muted" id="showing"></p>
+  <div class="card tests" id="tests"></div>
+</main>
+
+<script type="application/json" id="report-data">/*__REPORT_DATA__*/</script>
+<script>
+(() => {
+  const data = JSON.parse(document.getElementById('report-data').textContent);
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, props = {}, ...children) => {
+    const node = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (k === 'class') node.className = v;
+      else if (k === 'style') node.setAttribute('style', v);
+      else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
+      else if (v !== undefined && v !== null) node.setAttribute(k, v);
+    }
+    for (const c of children.flat()) if (c !== null && c !== undefined && c !== false) node.append(c);
+    return node;
+  };
+  const LABEL = { passed: 'Passed', failed: 'Failed', skipped: 'Skipped', flaky: 'Flaky', interrupted: 'Interrupted', unknown: 'Unknown' };
+  const color = (s) => `var(--${s === 'unknown' ? 'unknown' : s})`;
+  const fmtDur = (ms) => {
+    if (typeof ms !== 'number' || !isFinite(ms)) return '—';
+    if (ms < 1000) return `${Math.round(ms)} ms`;
+    const s = ms / 1000;
+    if (s < 60) return `${s.toFixed(s < 10 ? 2 : 1)} s`;
+    return `${Math.floor(s / 60)}m ${Math.round(s % 60)}s`;
+  };
+  const fmtDate = (iso) => {
+    const d = iso ? new Date(iso) : null;
+    return d && !isNaN(d) ? d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'medium' }) : 'unknown time';
+  };
+
+  // Theme toggle (auto → light → dark); remembered per viewer when storage is available.
+  const themes = ['auto', 'light', 'dark'];
+  let theme = 'auto';
+  try { theme = localStorage.getItem('test-report-theme') || 'auto'; } catch {}
+  const applyTheme = () => {
+    if (theme === 'auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', theme);
+    $('theme').textContent = `Theme: ${theme}`;
+  };
+  $('theme').addEventListener('click', () => {
+    theme = themes[(themes.indexOf(theme) + 1) % themes.length];
+    try { localStorage.setItem('test-report-theme', theme); } catch {}
+    applyTheme();
+  });
+  applyTheme();
+
+  // Header
+  document.title = `${data.label} — ${data.incomplete ? 'incomplete' : data.exitCode === 0 ? 'passed' : 'failed'}`;
+  $('title').textContent = data.label;
+  $('meta').append(
+    el('span', {}, fmtDate(data.startedAt)),
+    el('span', {}, `Duration ${fmtDur(data.durationMs)}`),
+    el('span', {}, 'Command ', el('code', {}, data.command)),
+    el('span', {}, `Exit code ${data.exitCode}`),
+  );
+  const overall = data.interrupted || data.incomplete ? 'interrupted' : data.exitCode === 0 ? 'passed' : 'failed';
+  $('status').className = `pill ${overall}`;
+  $('status').textContent = overall === 'interrupted' ? 'Incomplete' : overall === 'passed' ? 'Passed' : 'Failed';
+
+  // Banners
+  if (data.incomplete) {
+    $('banners').append(el('div', { class: 'banner warn', role: 'status' },
+      el('strong', {}, 'This report may be incomplete. '), data.incompleteReason || ''));
+  }
+  if (data.exitCode !== 0 && !data.incomplete && data.counts.failed + data.counts.interrupted === 0) {
+    $('banners').append(el('div', { class: 'banner error' },
+      el('strong', {}, `The test command exited with code ${data.exitCode}`),
+      ' even though no individual test failed — check the global errors below or the terminal output.'));
+  }
+  for (const err of data.globalErrors || []) {
+    $('banners').append(el('div', { class: 'banner error' }, el('strong', {}, 'Global error'), el('pre', {}, err)));
+  }
+
+  // Summary cards
+  const c = data.counts;
+  const rate = data.passRate === null ? '—' : `${(data.passRate * 100).toFixed(1)}%`;
+  const card = (cls, label, value, sub) =>
+    el('div', { class: `card stat ${cls}` }, el('div', { class: 'label' }, label), el('div', { class: 'value' }, String(value)), sub ? el('div', { class: 'sub' }, sub) : null);
+  $('cards').append(
+    card('', 'Total', c.total),
+    card('passed', 'Passed', c.passed),
+    card('failed', 'Failed', c.failed),
+    card('skipped', 'Skipped', c.skipped),
+    data.framework === 'playwright' || c.flaky ? card('flaky', 'Flaky', c.flaky, 'passed on retry') : null,
+    c.interrupted ? card('interrupted', 'Interrupted', c.interrupted) : null,
+    c.unknown ? card('unknown', 'Unknown', c.unknown, 'status not reported') : null,
+    card('', 'Pass rate', rate, c.flaky ? `of executed tests, incl. ${c.flaky} flaky` : 'of executed tests'),
+  );
+
+  // Donut chart
+  const order = ['passed', 'flaky', 'failed', 'interrupted', 'unknown', 'skipped'];
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = $('donut');
+  const R = 15.915; // circumference 100
+  const ring = document.createElementNS(ns, 'circle');
+  Object.entries({ cx: 21, cy: 21, r: R, fill: 'none', stroke: 'var(--surface-2)', 'stroke-width': 5 }).forEach(([k, v]) => ring.setAttribute(k, v));
+  svg.append(ring);
+  let offset = 25;
+  for (const s of order) {
+    if (!c[s] || !c.total) continue;
+    const pct = (c[s] / c.total) * 100;
+    const seg = document.createElementNS(ns, 'circle');
+    Object.entries({ cx: 21, cy: 21, r: R, fill: 'none', stroke: color(s), 'stroke-width': 5,
+      'stroke-dasharray': `${pct} ${100 - pct}`, 'stroke-dashoffset': offset }).forEach(([k, v]) => seg.setAttribute(k, v));
+    svg.append(seg);
+    offset -= pct;
+    $('legend').append(el('span', {}, el('i', { class: 'dot', style: `background:${color(s)}` }), `${LABEL[s]} ${c[s]}`));
+  }
+  const center = document.createElementNS(ns, 'text');
+  Object.entries({ x: 21, y: 22.5, 'text-anchor': 'middle', 'font-size': 6, 'font-weight': 650, fill: 'var(--text)' }).forEach(([k, v]) => center.setAttribute(k, v));
+  center.textContent = rate;
+  svg.append(center);
+  svg.setAttribute('aria-label', order.filter((s) => c[s]).map((s) => `${LABEL[s]} ${c[s]}`).join(', ') || 'No tests');
+  if (!c.total) $('legend').append(el('span', { class: 'muted' }, 'No test results'));
+
+  // Filters
+  const state = { filter: 'all', query: '', sort: 'default' };
+  const filters = [['all', `All ${c.total}`], ['passed', `Passed ${c.passed}`], ['failed', `Failed ${c.failed}`], ['skipped', `Skipped ${c.skipped}`]];
+  if (c.flaky) filters.push(['flaky', `Flaky ${c.flaky}`]);
+  if (c.interrupted + c.unknown) filters.push(['other', `Other ${c.interrupted + c.unknown}`]);
+  const chips = filters.map(([key, text]) => el('button', { type: 'button', class: 'chip', 'aria-pressed': String(key === 'all'),
+    onclick: () => { state.filter = key; chips.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.key === key))); render(); } }, text));
+  chips.forEach((b, i) => { b.dataset.key = filters[i][0]; });
+  $('chips').append(...chips);
+  $('search').addEventListener('input', (e) => { state.query = e.target.value.trim().toLowerCase(); render(); });
+  $('sort').addEventListener('change', (e) => { state.sort = e.target.value; render(); });
+  $('expand').addEventListener('click', () => document.querySelectorAll('#tests details:not(.no-details)').forEach((d) => (d.open = true)));
+  $('collapse').addEventListener('click', () => document.querySelectorAll('#tests details').forEach((d) => (d.open = false)));
+
+  const matches = (t) => {
+    if (state.filter === 'other' ? !['interrupted', 'unknown'].includes(t.status) : state.filter !== 'all' && t.status !== state.filter) return false;
+    if (!state.query) return true;
+    return [t.name, t.suite, t.file, t.project].filter(Boolean).join(' ').toLowerCase().includes(state.query);
+  };
+
+  const openByDefault = c.failed + c.interrupted <= 10;
+  const testRow = (t) => {
+    const hasDetails = Boolean(t.stack || t.error || (t.attempts && t.attempts.length > 1));
+    const summary = el('summary', {},
+      el('i', { class: 'dot', style: `background:${color(t.status)}`, title: LABEL[t.status] || t.status }),
+      el('span', { class: 'title' },
+        t.suite ? el('span', { class: 'suite' }, t.suite) : null,
+        t.name,
+        t.status !== 'passed' ? el('span', { class: 'tag', style: `color:${color(t.status)}` }, LABEL[t.status] || t.status) : null,
+        t.retries ? el('span', { class: 'tag muted' }, `${t.retries} ${t.retries === 1 ? 'retry' : 'retries'}`) : null,
+        el('span', { class: 'where' }, t.file + (t.line ? `:${t.line}` : ''), t.project ? el('span', { class: 'project' }, t.project) : null)),
+      el('span', { class: 'dur' }, fmtDur(t.durationMs)),
+      t.error ? el('span', { class: 'err-line' }, t.error) : null);
+    const details = el('details', { class: `test${hasDetails ? '' : ' no-details'}` }, summary);
+    if (!hasDetails) {
+      summary.addEventListener('click', (e) => e.preventDefault());
+      summary.setAttribute('tabindex', '-1');
+      return details;
+    }
+    const body = el('div', { class: 'details' });
+    if (t.stack) body.append(el('pre', {}, t.stack));
+    else if (t.error) body.append(el('pre', {}, t.error));
+    if (t.attempts && t.attempts.length > 1) {
+      body.append(el('table', { class: 'attempts' },
+        el('thead', {}, el('tr', {}, el('th', {}, 'Attempt'), el('th', {}, 'Result'), el('th', {}, 'Duration'))),
+        el('tbody', {}, t.attempts.map((a) => el('tr', {}, el('td', {}, a.retry === 0 ? 'First run' : `Retry ${a.retry}`), el('td', {}, a.status), el('td', {}, fmtDur(a.durationMs)))))));
+    }
+    details.append(body);
+    if (openByDefault && ['failed', 'interrupted'].includes(t.status)) details.open = true;
+    return details;
+  };
+
+  function render() {
+    let list = data.tests.filter(matches);
+    if (state.sort !== 'default') {
+      const d = (t) => (typeof t.durationMs === 'number' ? t.durationMs : -1);
+      list = [...list].sort((a, b) => (state.sort === 'slow' ? d(b) - d(a) : d(a) - d(b)));
+    }
+    $('showing').textContent = `Showing ${list.length} of ${data.tests.length} tests`;
+    const container = $('tests');
+    container.replaceChildren(...(list.length ? list.map(testRow) : [el('div', { class: 'empty' }, data.tests.length ? 'No tests match these filters.' : 'No test results were recorded.')]));
+  }
+  render();
+})();
+</script>
+</body>
+</html>
