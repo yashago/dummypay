@@ -153,6 +153,7 @@ on PR branches — leave it unrestricted, or move the test values to repository 
 | `npm run test:unit` | Vitest unit + component tests (jsdom) |
 | `npm run test:int` | Vitest integration tests against the hosted project (needs `.env.test`) |
 | `npm run test:e2e` | Playwright end-to-end tests (desktop + mobile viewports) |
+| `npm run test:{unit,int,e2e}:report` | Same suites, plus an HTML report in `reports/` (`latest-report.html`, `index.html`, `history/`); exits with the tests' own code |
 | `npm run db:new <name>` | Create a new SQL migration file |
 | `npm run db:status` | Compare local migrations with the hosted database |
 | `npm run db:push` | Apply pending migrations to the hosted database |
