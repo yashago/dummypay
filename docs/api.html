@@ -1,0 +1,1095 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DummyPay API Reference</title>
+<meta name="description" content="REST API reference for DummyPay, a simulated peer-to-peer payment platform, with Python examples.">
+<style>
+:root {
+  --bg: #fbfbfa;
+  --surface: #ffffff;
+  --surface-2: #f3f3f1;
+  --text: #1c1d1f;
+  --muted: #5d6066;
+  --border: #e3e3df;
+  --accent: #0f6e56;
+  --accent-soft: #e3f2ec;
+  --code-bg: #f5f5f3;
+  --code-text: #23262b;
+  --get: #1d6fb8;
+  --post: #0f7a4f;
+  --patch: #a15c00;
+  --delete: #b42318;
+  --warn-bg: #fff6e5;
+  --warn-border: #f0c36d;
+  --radius: 10px;
+  --mono: ui-monospace, SFMono-Regular, "Cascadia Code", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131416;
+    --surface: #1a1c1f;
+    --surface-2: #22252a;
+    --text: #e8e9eb;
+    --muted: #a0a4ab;
+    --border: #2e3137;
+    --accent: #4fc79f;
+    --accent-soft: #163a2f;
+    --code-bg: #1e2125;
+    --code-text: #e1e4e8;
+    --get: #6cb3f0;
+    --post: #5fd39a;
+    --patch: #f0b25a;
+    --delete: #f28b82;
+    --warn-bg: #2d2615;
+    --warn-border: #7a5d1c;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131416;
+  --surface: #1a1c1f;
+  --surface-2: #22252a;
+  --text: #e8e9eb;
+  --muted: #a0a4ab;
+  --border: #2e3137;
+  --accent: #4fc79f;
+  --accent-soft: #163a2f;
+  --code-bg: #1e2125;
+  --code-text: #e1e4e8;
+  --get: #6cb3f0;
+  --post: #5fd39a;
+  --patch: #f0b25a;
+  --delete: #f28b82;
+  --warn-bg: #2d2615;
+  --warn-border: #7a5d1c;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.6 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+h1, h2, h3, h4 { line-height: 1.25; }
+
+.layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); max-width: 1240px; margin: 0 auto; }
+nav.toc {
+  position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
+  padding: 28px 18px 40px 24px; border-right: 1px solid var(--border);
+}
+.brand { font-weight: 700; font-size: 17px; margin-bottom: 2px; }
+.brand-sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+nav.toc h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 20px 0 6px; }
+nav.toc a { display: block; color: var(--text); text-decoration: none; font-size: 13.5px; padding: 3px 8px; border-radius: 6px; }
+nav.toc a:hover { background: var(--surface-2); }
+nav.toc a code { background: none; padding: 0; font-size: 12.5px; }
+
+main { padding: 36px 48px 80px; min-width: 0; }
+header.hero h1 { font-size: 32px; margin: 0 0 8px; letter-spacing: -0.01em; }
+header.hero p { color: var(--muted); font-size: 16px; margin: 0 0 8px; max-width: 760px; }
+section { margin-top: 56px; }
+section > h2 { font-size: 24px; margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+section > p, section > ul, section > ol { max-width: 820px; }
+
+.endpoint {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px 22px; margin: 22px 0;
+}
+.endpoint h3 { margin: 0 0 8px; font-size: 18px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.endpoint h3 .path { font-family: var(--mono); font-size: 14.5px; font-weight: 600; overflow-wrap: anywhere; }
+.endpoint > p { margin: 6px 0 12px; }
+.method {
+  font: 700 11.5px/1 var(--mono); letter-spacing: .04em; padding: 5px 8px; border-radius: 5px;
+  color: #fff; flex-shrink: 0;
+}
+.m-get { background: var(--get); } .m-post { background: var(--post); }
+.m-patch { background: var(--patch); } .m-delete { background: var(--delete); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .method { color: #111; } }
+:root[data-theme="dark"] .method { color: #111; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.tag { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+.tag.secure { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+
+.table-wrap { overflow-x: auto; margin: 10px 0 14px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
+td code { white-space: nowrap; }
+
+.label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin: 14px 0 4px; }
+.code {
+  position: relative; background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; margin: 6px 0 12px;
+}
+.code pre {
+  margin: 0; padding: 14px 16px; overflow-x: auto; font: 13px/1.55 var(--mono); color: var(--code-text); tab-size: 4;
+}
+.copy {
+  position: absolute; top: 6px; right: 6px; font: 600 11.5px var(--sans); padding: 4px 9px;
+  border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer;
+}
+.copy:hover { color: var(--text); }
+.c { color: var(--muted); font-style: italic; }
+
+.callout {
+  background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 8px;
+  padding: 12px 16px; margin: 14px 0; max-width: 820px;
+}
+.callout.info { background: var(--accent-soft); border-color: transparent; }
+.callout strong:first-child { display: block; margin-bottom: 2px; }
+
+.theme-toggle {
+  margin-top: 22px; font: 500 12.5px var(--sans); padding: 6px 10px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  nav.toc { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 20px 16px; }
+  nav.toc .toc-links { columns: 2; column-gap: 12px; }
+  main { padding: 24px 16px 60px; }
+  header.hero h1 { font-size: 26px; }
+  .endpoint { padding: 16px 14px; }
+}
+@media (max-width: 520px) { nav.toc .toc-links { columns: 1; } }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav class="toc" aria-label="Contents">
+  <div class="brand">DummyPay API</div>
+  <div class="brand-sub">REST reference · Python examples</div>
+  <div class="toc-links">
+    <h4>Getting started</h4>
+    <a href="#overview">Overview</a>
+    <a href="#auth-model">Authentication</a>
+    <a href="#client">Python client</a>
+    <a href="#conventions">Conventions</a>
+    <a href="#errors">Errors</a>
+    <a href="#limits">Rate limits</a>
+
+    <h4>Auth</h4>
+    <a href="#signup">Sign up</a>
+    <a href="#signin">Sign in</a>
+    <a href="#refresh">Refresh token</a>
+    <a href="#me">Current user</a>
+    <a href="#password">Password reset</a>
+    <a href="#logout">Sign out</a>
+
+    <h4>Profile &amp; wallets</h4>
+    <a href="#profile"><code>profiles</code></a>
+    <a href="#currencies"><code>supported_currencies</code></a>
+    <a href="#wallets"><code>wallets</code></a>
+    <a href="#wallet-summary"><code>get_wallet_summary</code></a>
+    <a href="#add-wallet"><code>add_wallet</code></a>
+    <a href="#preferred"><code>set_preferred_currency</code></a>
+
+    <h4>Exchange rates</h4>
+    <a href="#fx-tables">Rate tables</a>
+    <a href="#preview"><code>preview_conversion</code></a>
+    <a href="#fx-refresh"><code>fx-refresh</code></a>
+
+    <h4>Transfers</h4>
+    <a href="#transfer-flow">Transfer flow</a>
+    <a href="#lookup"><code>lookup_recipient</code></a>
+    <a href="#quote"><code>create_transfer_quote</code></a>
+    <a href="#execute"><code>execute_transfer</code></a>
+    <a href="#history"><code>list_my_transactions</code></a>
+    <a href="#transactions-table"><code>transactions</code></a>
+
+    <h4>Notifications</h4>
+    <a href="#notifications"><code>notifications</code></a>
+    <a href="#mark-read"><code>mark_notifications_read</code></a>
+
+    <h4>Payment methods</h4>
+    <a href="#cards-add"><code>add-payment-card</code></a>
+    <a href="#cards"><code>payment_cards</code></a>
+    <a href="#banks-add"><code>add-bank-account</code></a>
+    <a href="#banks"><code>bank_accounts</code></a>
+
+    <h4>Reference</h4>
+    <a href="#e2e">End-to-end test</a>
+    <a href="#error-codes">Error code index</a>
+  </div>
+  <button class="theme-toggle" type="button" id="themeToggle">Toggle theme</button>
+</nav>
+
+<main>
+
+<header class="hero">
+  <h1>DummyPay API Reference</h1>
+  <p>DummyPay is a simulated peer-to-peer payment platform. Registered users hold wallets of fictional money and send it to each other. This page documents every HTTP endpoint a signed-in user can call, with Python examples you can paste into a test script.</p>
+  <p>All money is fictional. No card network, bank or payment processor is ever contacted.</p>
+</header>
+
+<!-- ======================================================================= -->
+<section id="overview">
+<h2>Overview</h2>
+<p>The API is served by Supabase. There are three kinds of endpoint, all under one base URL:</p>
+<div class="table-wrap"><table>
+<tr><th>Kind</th><th>URL pattern</th><th>Used for</th></tr>
+<tr><td>Auth</td><td><code>/auth/v1/…</code></td><td>Sign up, sign in, tokens, passwords</td></tr>
+<tr><td>Tables &amp; views</td><td><code>/rest/v1/&lt;table&gt;</code></td><td>Reading your own data (and the few writes that are allowed)</td></tr>
+<tr><td>Functions (RPC)</td><td><code>/rest/v1/rpc/&lt;function&gt;</code></td><td>Every operation that moves money or applies business rules</td></tr>
+<tr><td>Edge Functions</td><td><code>/functions/v1/&lt;name&gt;</code></td><td>Adding payment methods, refreshing exchange rates</td></tr>
+</table></div>
+<div class="label">Base URL</div>
+<div class="code"><pre>https://vtimmqlnyoyxiwczfdwf.supabase.co</pre></div>
+
+<div class="callout info">
+<strong>Why some calls use <code>/rpc</code> and some don't</strong>
+Table URLs read rows directly. Row Level Security (RLS) means you only ever get your own rows, and money tables are read-only. Anything that changes a balance goes through an <code>/rpc/</code> function, which checks the caller, validates input and runs atomically on the server.
+</div>
+</section>
+
+<!-- ======================================================================= -->
+<section id="auth-model">
+<h2>Authentication</h2>
+<p>Every request carries two headers:</p>
+<div class="table-wrap"><table>
+<tr><th>Header</th><th>Value</th></tr>
+<tr><td><code>apikey</code></td><td>The project's <strong>publishable (anon) key</strong>. It's public by design and identifies the project, not a user.</td></tr>
+<tr><td><code>Authorization</code></td><td><code>Bearer &lt;access_token&gt;</code>, the JWT returned when a user signs in. It identifies the user.</td></tr>
+</table></div>
+<p>The server reads the caller's identity from the token. No endpoint accepts a user ID that decides who is acting, so a script can do exactly what that user could do in the app and nothing more.</p>
+<ul>
+<li>Access tokens expire after <strong>1 hour</strong>. Use the <a href="#refresh">refresh token</a> for longer test runs.</li>
+<li>Only <code>supported_currencies</code>, sign-up and sign-in work without a user token.</li>
+</ul>
+<div class="callout">
+<strong>Never use the service-role (secret) key for testing.</strong>
+It bypasses Row Level Security, so tests would exercise a path real users can't reach. Keep it out of scripts, repositories and CI logs.
+</div>
+<div class="label">Get the publishable key</div>
+<p>Supabase dashboard → Project Settings → API Keys → <em>publishable</em> key. This is the same value as <code>VITE_SUPABASE_ANON_KEY</code> in the web app's <code>.env</code>.</p>
+</section>
+
+<!-- ======================================================================= -->
+<section id="client">
+<h2>Python client</h2>
+<p>The examples on this page use the small helper below. It needs only <code>requests</code> (<code>pip install requests</code>).</p>
+<div class="label">dummypay_client.py</div>
+<div class="code"><pre>import os
+import uuid
+import requests
+
+BASE_URL = "https://vtimmqlnyoyxiwczfdwf.supabase.co"
+ANON_KEY = os.environ["DUMMYPAY_ANON_KEY"]   # publishable key, never the secret key
+
+
+class ApiError(Exception):
+    """Raised for any non-2xx response. `code` is the DummyPay error code."""
+
+    def __init__(self, status, body):
+        self.status = status
+        self.body = body
+        msg = ""
+        if isinstance(body, dict):
+            # PostgREST errors use "message"; Edge Functions use "error";
+            # Auth errors use "error_code" / "msg".
+            msg = body.get("message") or body.get("error") or body.get("error_code") or body.get("msg") or ""
+        self.code = msg.split(":", 1)[0].strip()
+        super().__init__(f"{status} {self.code}: {body}")
+
+
+class DummyPay:
+    def __init__(self):
+        self.http = requests.Session()
+        self.http.headers["apikey"] = ANON_KEY
+        self.refresh_token = None
+
+    # ---- auth --------------------------------------------------------------
+    def sign_in(self, email, password):
+        r = self.http.post(f"{BASE_URL}/auth/v1/token", params={"grant_type": "password"},
+                           json={"email": email, "password": password})
+        return self._use_session(self._check(r))
+
+    def refresh(self):
+        r = self.http.post(f"{BASE_URL}/auth/v1/token", params={"grant_type": "refresh_token"},
+                           json={"refresh_token": self.refresh_token})
+        return self._use_session(self._check(r))
+
+    def _use_session(self, session):
+        self.http.headers["Authorization"] = f"Bearer {session['access_token']}"
+        self.refresh_token = session["refresh_token"]
+        self.user_id = session["user"]["id"]
+        return session
+
+    # ---- data --------------------------------------------------------------
+    def rpc(self, function, **params):
+        """POST /rest/v1/rpc/&lt;function&gt; with named parameters."""
+        r = self.http.post(f"{BASE_URL}/rest/v1/rpc/{function}", json=params)
+        return self._check(r)
+
+    def select(self, table, **query):
+        """GET /rest/v1/&lt;table&gt; with PostgREST query parameters."""
+        r = self.http.get(f"{BASE_URL}/rest/v1/{table}", params=query)
+        return self._check(r)
+
+    def edge(self, name, body=None):
+        """POST /functions/v1/&lt;name&gt;."""
+        r = self.http.post(f"{BASE_URL}/functions/v1/{name}", json=body or {})
+        return self._check(r)
+
+    @staticmethod
+    def _check(r):
+        body = r.json() if r.content else None
+        if not r.ok:
+            raise ApiError(r.status_code, body)
+        return body
+
+
+if __name__ == "__main__":
+    api = DummyPay()
+    api.sign_in("alice@example.com", "alice-password")
+    print(api.rpc("get_wallet_summary"))</pre></div>
+<p>Equivalent raw request with <code>curl</code>:</p>
+<div class="code"><pre>curl -X POST "$BASE_URL/rest/v1/rpc/get_wallet_summary" \
+  -H "apikey: $ANON_KEY" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{}'</pre></div>
+</section>
+
+<!-- ======================================================================= -->
+<section id="conventions">
+<h2>Conventions</h2>
+<ul>
+<li><strong>Money is in minor units</strong> (cents, agorot, pence) as integers. <code>1250</code> in USD means $12.50. Every supported currency has 2 decimal places.</li>
+<li><strong>Currencies:</strong> <code>ILS</code>, <code>USD</code>, <code>EUR</code>, <code>GBP</code>.</li>
+<li><strong>Amount side:</strong> <code>send</code> means the amount is what leaves your wallet. <code>receive</code> means it's what the recipient gets, and the server works out the sending amount.</li>
+<li><strong>Timestamps</strong> are ISO 8601 with a time zone, e.g. <code>2026-11-22T09:15:04.123+00:00</code>.</li>
+<li><strong>RPC parameters</strong> are sent as a JSON object whose keys are the parameter names (<code>p_currency</code>, …). Optional parameters can be omitted.</li>
+<li><strong>RPC response shape</strong> depends on the function. Functions that return a table give a JSON <em>array</em>, even for one row. Functions that return a single record give a JSON <em>object</em>. Each endpoint below says which.</li>
+<li><strong>Table queries</strong> use PostgREST syntax: <code>select=col1,col2</code>, <code>order=created_at.desc</code>, filters like <code>currency=eq.USD</code>, paging with <code>limit</code> and <code>offset</code>.</li>
+<li><strong>Rounding:</strong> conversions round half-up to the nearest minor unit on the computed side.</li>
+</ul>
+</section>
+
+<!-- ======================================================================= -->
+<section id="errors">
+<h2>Errors</h2>
+<p>Business-rule failures come back from <code>/rest/v1/rpc/…</code> as HTTP <strong>400</strong> with a PostgREST error body. The DummyPay error code is the text before the first colon in <code>message</code>:</p>
+<div class="code"><pre>{
+  "code": "P0001",
+  "details": null,
+  "hint": null,
+  "message": "INSUFFICIENT_FUNDS"
+}</pre></div>
+<div class="code"><pre>{
+  "code": "P0001",
+  "message": "QUOTE_EXPIRED: the quote has expired, please review the transfer again"
+}</pre></div>
+<p>Edge Functions return <code>{"error": "CODE"}</code>, plus <code>fields</code> for validation errors.</p>
+<div class="table-wrap"><table>
+<tr><th>HTTP</th><th>Meaning</th></tr>
+<tr><td>400</td><td>Business rule rejected (<code>P0001</code>), or a malformed value such as an unknown currency (<code>22P02</code>: invalid input value for enum)</td></tr>
+<tr><td>401 / 403</td><td>Missing or expired token, or calling something your role isn't allowed to (<code>42501</code>)</td></tr>
+<tr><td>404</td><td>Unknown table or function, or wrong parameter names (<code>PGRST202</code>)</td></tr>
+<tr><td>409</td><td>Edge Function limit reached (<code>LIMIT_REACHED</code>)</td></tr>
+</table></div>
+<div class="label">Asserting on an error in a test</div>
+<div class="code"><pre>import pytest
+
+def test_cannot_send_to_self(api):
+    with pytest.raises(ApiError) as e:
+        api.rpc("create_transfer_quote",
+                p_recipient_id=api.user_id, p_sending_currency="USD",
+                p_amount_minor=100, p_input_side="send")
+    assert e.value.code == "SELF_TRANSFER"</pre></div>
+<p>All codes are listed in the <a href="#error-codes">error code index</a>.</p>
+</section>
+
+<!-- ======================================================================= -->
+<section id="limits">
+<h2>Rate limits</h2>
+<p>Per-user sliding-window limits protect recipient lookup and quoting. A rejected call fails with <code>RATE_LIMITED</code> and doesn't count towards the limit.</p>
+<div class="table-wrap"><table>
+<tr><th>Operation</th><th>Limit</th></tr>
+<tr><td><code>lookup_recipient</code></td><td>20 calls per rolling minute</td></tr>
+<tr><td><code>create_transfer_quote</code></td><td>30 successful quotes per rolling minute</td></tr>
+<tr><td><code>add-payment-card</code></td><td>10 cards stored per user</td></tr>
+<tr><td><code>add-bank-account</code></td><td>10 bank accounts stored per user</td></tr>
+<tr><td><code>fx-refresh</code></td><td>The provider is contacted at most once per 30 minutes across all users</td></tr>
+</table></div>
+<p>Supabase Auth also rate-limits sign-ins and sign-ups per IP address. Reuse one session per test user rather than signing in for every test.</p>
+</section>
+
+<!-- ======================================================================= -->
+<section id="auth-endpoints">
+<h2>Auth endpoints</h2>
+<p>These only need the <code>apikey</code> header (and the Bearer token where noted).</p>
+
+<div class="endpoint" id="signup">
+<h3><span class="method m-post">POST</span><span class="path">/auth/v1/signup</span></h3>
+<p>Registers a user. In the same database transaction, the server creates the profile and a wallet in the chosen currency, and credits the one-time welcome balance: ₪13,000.00 for ILS, or 5,000.00 for USD, EUR and GBP.</p>
+<div class="table-wrap"><table>
+<tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+<tr><td><code>email</code></td><td>string</td><td>Must be unique</td></tr>
+<tr><td><code>password</code></td><td>string</td><td>At least 8 characters</td></tr>
+<tr><td><code>data.display_name</code></td><td>string</td><td>2–50 characters, no leading or trailing spaces</td></tr>
+<tr><td><code>data.preferred_currency</code></td><td>string</td><td><code>ILS</code> | <code>USD</code> | <code>EUR</code> | <code>GBP</code></td></tr>
+</table></div>
+<div class="code"><pre>r = requests.post(f"{BASE_URL}/auth/v1/signup", headers={"apikey": ANON_KEY}, json={
+    "email": "carol@example.com",
+    "password": "a-long-password",
+    "data": {"display_name": "Carol", "preferred_currency": "EUR"},
+})
+print(r.status_code, r.json())   # includes access_token when email confirmation is off</pre></div>
+<p>An invalid display name or currency aborts the whole sign-up, and no user is created.</p>
+</div>
+
+<div class="endpoint" id="signin">
+<h3><span class="method m-post">POST</span><span class="path">/auth/v1/token?grant_type=password</span></h3>
+<p>Signs in and returns a session.</p>
+<div class="code"><pre>api = DummyPay()
+session = api.sign_in("alice@example.com", "alice-password")
+session.keys()   # access_token, token_type, expires_in, expires_at, refresh_token, user</pre></div>
+<div class="label">Response (abridged)</div>
+<div class="code"><pre>{
+  "access_token": "eyJhbGciOi...",
+  "token_type": "bearer",
+  "expires_in": 3600,
+  "refresh_token": "v1.Mr5...",
+  "user": { "id": "6c0f…", "email": "alice@example.com", "user_metadata": { "display_name": "Alice", "preferred_currency": "ILS" } }
+}</pre></div>
+<p>Wrong credentials return 400 with <code>error_code: "invalid_credentials"</code>.</p>
+</div>
+
+<div class="endpoint" id="refresh">
+<h3><span class="method m-post">POST</span><span class="path">/auth/v1/token?grant_type=refresh_token</span></h3>
+<p>Swaps a refresh token for a new session. Refresh tokens are single-use, so always store the new one.</p>
+<div class="code"><pre>api.refresh()   # updates the Authorization header and stored refresh token</pre></div>
+</div>
+
+<div class="endpoint" id="me">
+<h3><span class="method m-get">GET</span><span class="path">/auth/v1/user</span></h3>
+<div class="tags"><span class="tag secure">Bearer token</span></div>
+<p>Returns the Auth user behind the token. It's useful to check that a token is still valid.</p>
+<div class="code"><pre>me = api.http.get(f"{BASE_URL}/auth/v1/user").json()
+print(me["id"], me["email"])</pre></div>
+</div>
+
+<div class="endpoint" id="password">
+<h3><span class="method m-post">POST</span><span class="path">/auth/v1/recover</span>
+&nbsp;<span class="method m-patch">PUT</span><span class="path">/auth/v1/user</span></h3>
+<p><code>/recover</code> emails a password-reset link. It responds the same way whether or not the address is registered, so it can't be used to discover accounts. <code>PUT /user</code> with a Bearer token sets a new password.</p>
+<div class="code"><pre>requests.post(f"{BASE_URL}/auth/v1/recover", headers={"apikey": ANON_KEY},
+              json={"email": "alice@example.com"})
+
+api.http.put(f"{BASE_URL}/auth/v1/user", json={"password": "new-long-password"})</pre></div>
+</div>
+
+<div class="endpoint" id="logout">
+<h3><span class="method m-post">POST</span><span class="path">/auth/v1/logout</span></h3>
+<div class="tags"><span class="tag secure">Bearer token</span></div>
+<p>Revokes the session's refresh token. Returns 204.</p>
+<div class="code"><pre>api.http.post(f"{BASE_URL}/auth/v1/logout")</pre></div>
+</div>
+</section>
+
+<!-- ======================================================================= -->
+<section id="profile-wallets">
+<h2>Profile &amp; wallets</h2>
+
+<div class="endpoint" id="profile">
+<h3><span class="method m-get">GET</span><span class="path">/rest/v1/profiles</span>
+&nbsp;<span class="method m-patch">PATCH</span><span class="path">/rest/v1/profiles</span></h3>
+<div class="tags"><span class="tag secure">RLS: own row only</span><span class="tag">Only display_name is writable</span></div>
+<p>Your profile. You can't read other users' profiles (use <a href="#lookup"><code>lookup_recipient</code></a>). The only column you can change is <code>display_name</code>. Use <a href="#preferred"><code>set_preferred_currency</code></a> to change currency.</p>
+<div class="code"><pre>profile = api.select("profiles", select="id,email,display_name,preferred_currency,created_at")[0]
+
+r = api.http.patch(f"{BASE_URL}/rest/v1/profiles",
+                   params={"id": f"eq.{api.user_id}"},
+                   headers={"Prefer": "return=representation"},
+                   json={"display_name": "Alice Cohen"})
+print(r.json())</pre></div>
+<div class="label">Response</div>
+<div class="code"><pre>[{
+  "id": "6c0f…", "email": "alice@example.com", "display_name": "Alice Cohen",
+  "preferred_currency": "ILS", "created_at": "2026-11-17T08:01:22.481+00:00"
+}]</pre></div>
+<p>Trying to <code>PATCH</code> any other column (for example <code>preferred_currency</code>) returns 401/403 <code>42501</code>.</p>
+</div>
+
+<div class="endpoint" id="currencies">
+<h3><span class="method m-get">GET</span><span class="path">/rest/v1/supported_currencies</span></h3>
+<div class="tags"><span class="tag">No user token needed</span></div>
+<p>Reference data: currency codes, symbols and the welcome-grant amount for each.</p>
+<div class="code"><pre>requests.get(f"{BASE_URL}/rest/v1/supported_currencies",
+             headers={"apikey": ANON_KEY}, params={"order": "code"}).json()</pre></div>
+<div class="code"><pre>[
+  {"code": "EUR", "name": "Euro",           "symbol": "€", "minor_units": 2, "initial_grant_minor": 500000},
+  {"code": "GBP", "name": "British Pound",  "symbol": "£", "minor_units": 2, "initial_grant_minor": 500000},
+  {"code": "ILS", "name": "Israeli Shekel", "symbol": "₪", "minor_units": 2, "initial_grant_minor": 1300000},
+  {"code": "USD", "name": "US Dollar",      "symbol": "$", "minor_units": 2, "initial_grant_minor": 500000}
+]</pre></div>
+</div>
+
+<div class="endpoint" id="wallets">
+<h3><span class="method m-get">GET</span><span class="path">/rest/v1/wallets</span></h3>
+<div class="tags"><span class="tag secure">RLS: own wallets only</span><span class="tag">Read-only</span></div>
+<p>All of your wallets, one per currency. Balances can never be written through this endpoint. Any <code>POST</code>, <code>PATCH</code> or <code>DELETE</code> is rejected.</p>
+<div class="code"><pre>wallets = api.select("wallets",
+                     select="id,currency,balance_minor,created_at,updated_at",
+                     order="created_at.asc")
+
+usd = api.select("wallets", currency="eq.USD")   # filter example</pre></div>
+<div class="code"><pre>[
+  {"id": "b1e2…", "currency": "ILS", "balance_minor": 1300000,
+   "created_at": "2026-11-17T08:01:22.481+00:00", "updated_at": "2026-11-17T08:01:22.481+00:00"}
+]</pre></div>
+</div>
+
+<div class="endpoint" id="wallet-summary">
+<h3><span class="method m-post">POST</span><span class="path">/rest/v1/rpc/get_wallet_summary</span></h3>
+<div class="tags"><span class="tag">No parameters</span><span class="tag">Returns array (1 row)</span></div>
+<p>The approximate total of all your wallets, converted to your preferred currency at the current rates.</p>
+<div class="code"><pre>summary = api.rpc("get_wallet_summary")[0]</pre></div>
+<div class="code"><pre>[{
+  "preferred_currency": "ILS",
+  "total_minor": 1482350,
+  "wallet_count": 2,
+  "rates_as_of": "2026-11-22T00:00:01+00:00",
+  "rates_stale": false
+}]</pre></div>
+<div class="table-wrap"><table>
+<tr><th>Field</th><th>Meaning</th></tr>
+<tr><td><code>total_minor</code></td><td>Sum in the preferred currency. <code>null</code> if a needed exchange rate is missing.</td></tr>
+<tr><td><code>rates_as_of</code></td><td>Oldest rate used. <code>null</code> when every wallet is already in the preferred currency.</td></tr>
+<tr><td><code>rates_stale</code></td><td><code>true</code> if a rate used is older than 26 hours</td></tr>
+</table></div>
+</div>
+
+<div class="endpoint" id="add-wallet">
+<h3><span class="method m-post">POST</span><span class="path">/rest/v1/rpc/add_wallet</span></h3>
+<div class="tags"><span class="tag">Returns object</span></div>
+<p>Opens a new wallet with a zero balance. It never adds funds.</p>
+<div class="table-wrap"><table>
+<tr><th>Parameter</th><th>Type</th><th>Notes</th></tr>
+<tr><td><code>p_currency</code></td><td>currency</td><td>Required</td></tr>
+</table></div>
+<div class="code"><pre>wallet = api.rpc("add_wallet", p_currency="GBP")</pre></div>
+<div class="code"><pre>{"id": "9a7c…", "user_id": "6c0f…", "currency": "GBP", "balance_minor": 0,
+ "created_at": "2026-11-22T09:15:04+00:00", "updated_at": "2026-11-22T09:15:04+00:00"}</pre></div>
+<p><strong>Errors:</strong> <code>WALLET_EXISTS</code>, <code>INVALID_CURRENCY</code>.</p>
+</div>
+
+<div class="endpoint" id="preferred">
+<h3><span class="method m-post">POST</span><span class="path">/rest/v1/rpc/set_preferred_currency</span></h3>
+<div class="tags"><span class="tag">Returns object (profile)</span></div>
+<p>Changes your preferred currency. Incoming transfers arrive in this currency. If you don't have a wallet in it yet, a zero-balance one is opened. No funds are added.</p>
+<div class="code"><pre>profile = api.rpc("set_preferred_currency", p_currency="USD")
+assert profile["preferred_currency"] == "USD"</pre></div>
+<p><strong>Errors:</strong> <code>INVALID_CURRENCY</code>.</p>
+</div>
+</section>
+
+<!-- ======================================================================= -->
+<section id="fx">
+<h2>Exchange rates</h2>
+
+<div class="endpoint" id="fx-tables">
+<h3><span class="method m-get">GET</span><span class="path">/rest/v1/fx_cross_rates · fx_rates · fx_status</span></h3>
+<div class="tags"><span class="tag">Read-only</span></div>
+<p>Current rates. A rate can be used for transfers only while its provider timestamp is under 26 hours old.</p>
+<div class="table-wrap"><table>
+<tr><th>Resource</th><th>Contents</th></tr>
+<tr><td><code>fx_cross_rates</code></td><td>Every currency pair: <code>from_currency</code>, <code>to_currency</code>, <code>rate</code>, <code>provider_updated_at</code>, <code>fetched_at</code>, <code>provider</code></td></tr>
+<tr><td><code>fx_rates</code></td><td>Raw provider quotes as <code>units_per_usd</code> per currency</td></tr>
+<tr><td><code>fx_status</code></td><td>One row: <code>last_attempt_at</code>, <code>last_success_at</code>, <code>last_error</code></td></tr>
+</table></div>
+<div class="code"><pre>rates = api.select("fx_cross_rates", from_currency="eq.USD")
+# [{"from_currency": "USD", "to_currency": "ILS", "rate": 3.6512, ...}, ...]
+
+status = api.select("fx_status")[0]</pre></div>
+</div>
+
+<div class="endpoint" id="preview">
+<h3><span class="method m-post">POST</span><span class="path">/rest/v1/rpc/preview_conversion</span></h3>
+<div class="tags"><span class="tag">Returns array (1 row)</span><span class="tag">Doesn't move money</span></div>
+<p>Shows what a conversion would give, using the same maths as a transfer quote.</p>
+<div class="table-wrap"><table>
+<tr><th>Parameter</th><th>Type</th><th>Notes</th></tr>
+<tr><td><code>p_amount_minor</code></td><td>integer</td><td>1 – 100,000,000 (0.01 – 1,000,000.00)</td></tr>
+<tr><td><code>p_from</code></td><td>currency</td><td>Sending currency</td></tr>
+<tr><td><code>p_to</code></td><td>currency</td><td>Receiving currency</td></tr>
+<tr><td><code>p_side</code></td><td><code>send</code> | <code>receive</code></td><td>Optional, default <code>send</code></td></tr>
+</table></div>
+<div class="code"><pre>p = api.rpc("preview_conversion", p_amount_minor=10000, p_from="USD", p_to="ILS")[0]</pre></div>
+<div class="code"><pre>[{
+  "sending_currency": "USD", "receiving_currency": "ILS",
+  "sending_amount_minor": 10000, "receiving_amount_minor": 36512,
+  "rate": 3.6512, "rate_provider_updated_at": "2026-11-22T00:00:01+00:00"
+}]</pre></div>
+<p><strong>Errors:</strong> <code>INVALID_AMOUNT</code>, <code>INVALID_CURRENCY</code>, <code>RATE_UNAVAILABLE</code>, <code>RATE_STALE</code>.</p>
+</div>
+
+<div class="endpoint" id="fx-refresh">
+<h3><span class="method m-post">POST</span><span class="path">/functions/v1/fx-refresh</span></h3>
+<div class="tags"><span class="tag secure">Bearer token</span><span class="tag">No body</span></div>
+<p>Asks the server to fetch fresh rates from the provider. The provider is contacted at most once every 30 minutes across all users. Calls inside that window return <code>THROTTLED</code>. If anything fails, the previous rates are kept.</p>
+<div class="code"><pre>api.edge("fx-refresh")</pre></div>
+<div class="table-wrap"><table>
+<tr><th>HTTP</th><th>Body</th></tr>
+<tr><td>200</td><td><code>{"refreshed": true, "provider_updated_at": "…"}</code></td></tr>
+<tr><td>200</td><td><code>{"refreshed": false, "reason": "THROTTLED"}</code></td></tr>
+<tr><td>401</td><td><code>{"error": "NOT_AUTHENTICATED"}</code></td></tr>
+<tr><td>502</td><td><code>{"refreshed": false, "reason": "PROVIDER_UNAVAILABLE" | "PROVIDER_INVALID"}</code></td></tr>
+<tr><td>503</td><td><code>{"refreshed": false, "reason": "NOT_CONFIGURED"}</code></td></tr>
+</table></div>
+</div>
+</section>
+
+<!-- ======================================================================= -->
+<section id="transfers">
+<h2>Transfers</h2>
+
+<div id="transfer-flow">
+<p>Sending money takes three calls. The money only moves in the last one.</p>
+<ol>
+<li><a href="#lookup"><code>lookup_recipient</code></a>: find the registered user by email and get their <code>user_id</code>.</li>
+<li><a href="#quote"><code>create_transfer_quote</code></a>: the server prices the transfer and locks in the rate for <strong>60 seconds</strong>.</li>
+<li><a href="#execute"><code>execute_transfer</code></a>: debits and credits both wallets in one atomic database transaction, records it in the ledger and notifies the recipient.</li>
+</ol>
+<div class="callout info">
+<strong>Money always arrives in the recipient's preferred currency.</strong>
+You choose which of your wallets to send from. The receiving currency is set by the recipient's profile, and the recipient gets a wallet in that currency automatically if they don't have one.
+</div>
+</div>
+
+<div class="endpoint" id="lookup">
+<h3><span class="method m-post">POST</span><span class="path">/rest/v1/rpc/lookup_recipient</span></h3>
+<div class="tags"><span class="tag">Returns array (1 row)</span><span class="tag">20 / minute</span></div>
+<p>Finds a registered user by email. Only registered users can receive money. Not finding someone is not an error: the result's <code>status</code> says what happened.</p>
+<div class="table-wrap"><table>
+<tr><th>Parameter</th><th>Type</th><th>Notes</th></tr>
+<tr><td><code>p_email</code></td><td>string</td><td>Case-insensitive; surrounding spaces are trimmed</td></tr>
+</table></div>
+<div class="code"><pre>row = api.rpc("lookup_recipient", p_email="bob@example.com")[0]
+if row["status"] != "found":
+    raise SystemExit(f"cannot send: {row['status']}")
+recipient_id = row["user_id"]</pre></div>
+<div class="code"><pre>[{"status": "found", "user_id": "e41d…", "display_name": "Bob",
+  "email": "bob@example.com", "preferred_currency": "USD"}]
+
+[{"status": "not_found", "user_id": null, "display_name": null, "email": null, "preferred_currency": null}]
+
+[{"status": "self", "user_id": null, ...}]</pre></div>
+<p><strong>Errors:</strong> <code>INVALID_EMAIL</code>, <code>RATE_LIMITED</code>.</p>
+</div>
+
+<div class="endpoint" id="quote">
+<h3><span class="method m-post">POST</span><span class="path">/rest/v1/rpc/create_transfer_quote</span></h3>
+<div class="tags"><span class="tag">Returns object</span><span class="tag">Valid 60 s</span><span class="tag">30 / minute</span></div>
+<p>Prices a transfer on the server and stores the quote. It doesn't move any money.</p>
+<div class="table-wrap"><table>
+<tr><th>Parameter</th><th>Type</th><th>Notes</th></tr>
+<tr><td><code>p_recipient_id</code></td><td>uuid</td><td><code>user_id</code> from <code>lookup_recipient</code></td></tr>
+<tr><td><code>p_sending_currency</code></td><td>currency</td><td>One of your wallets</td></tr>
+<tr><td><code>p_amount_minor</code></td><td>integer</td><td>1 – 100,000,000</td></tr>
+<tr><td><code>p_input_side</code></td><td><code>send</code> | <code>receive</code></td><td>Which side <code>p_amount_minor</code> refers to</td></tr>
+</table></div>
+<div class="code"><pre>quote = api.rpc("create_transfer_quote",
+                p_recipient_id=recipient_id,
+                p_sending_currency="ILS",
+                p_amount_minor=5000,          # ₪50.00
+                p_input_side="send")</pre></div>
+<div class="code"><pre>{
+  "quote_id": "0d3b…",
+  "recipient_user_id": "e41d…",
+  "recipient_display_name": "Bob",
+  "recipient_email": "bob@example.com",
+  "sending_currency": "ILS",
+  "receiving_currency": "USD",
+  "sending_amount_minor": 5000,
+  "receiving_amount_minor": 1369,
+  "amount_input_side": "send",
+  "exchange_rate": 0.2738824496,
+  "rate_provider_updated_at": "2026-11-22T00:00:01+00:00",
+  "expires_at": "2026-11-22T09:16:04.551+00:00"
+}</pre></div>
+<p><strong>Errors:</strong> <code>RECIPIENT_NOT_FOUND</code>, <code>SELF_TRANSFER</code>, <code>INVALID_CURRENCY</code>, <code>INVALID_AMOUNT</code>, <code>NO_WALLET</code>, <code>RATE_UNAVAILABLE</code>, <code>RATE_STALE</code>, <code>INSUFFICIENT_FUNDS</code>, <code>RATE_LIMITED</code>.</p>
+</div>
+
+<div class="endpoint" id="execute">
+<h3><span class="method m-post">POST</span><span class="path">/rest/v1/rpc/execute_transfer</span></h3>
+<div class="tags"><span class="tag">Returns object (transaction)</span><span class="tag secure">Atomic</span><span class="tag secure">Idempotent</span></div>
+<p>Carries out a quote. This is the only endpoint that moves money between users. The balance is checked again under a lock, so two concurrent transfers can never overdraw a wallet.</p>
+<div class="table-wrap"><table>
+<tr><th>Parameter</th><th>Type</th><th>Notes</th></tr>
+<tr><td><code>p_quote_id</code></td><td>uuid</td><td>From <code>create_transfer_quote</code>, unexpired and unused</td></tr>
+<tr><td><code>p_idempotency_key</code></td><td>uuid</td><td>Generate a new one per transfer attempt</td></tr>
+</table></div>
+<div class="code"><pre>key = str(uuid.uuid4())
+txn = api.rpc("execute_transfer", p_quote_id=quote["quote_id"], p_idempotency_key=key)
+
+# Retrying with the SAME key and quote is safe: it returns the original
+# transaction and doesn't move money twice.
+again = api.rpc("execute_transfer", p_quote_id=quote["quote_id"], p_idempotency_key=key)
+assert again["id"] == txn["id"]</pre></div>
+<div class="code"><pre>{
+  "id": "7f21…",
+  "type": "transfer",
+  "status": "completed",
+  "sender_user_id": "6c0f…",            "recipient_user_id": "e41d…",
+  "sender_wallet_id": "b1e2…",          "recipient_wallet_id": "c88a…",
+  "sending_amount_minor": 5000,         "sending_currency": "ILS",
+  "receiving_amount_minor": 1369,       "receiving_currency": "USD",
+  "exchange_rate": 0.2738824496,
+  "amount_input_side": "send",
+  "quote_id": "0d3b…",
+  "rate_provider": "exchangerate-api",
+  "rate_provider_updated_at": "2026-11-22T00:00:01+00:00",
+  "idempotency_key": "a4f3…",
+  "sender_display_name": "Alice",       "sender_email": "alice@example.com",
+  "recipient_display_name": "Bob",      "recipient_email": "bob@example.com",
+  "created_at": "2026-11-22T09:15:31.902+00:00"
+}</pre></div>
+<div class="table-wrap"><table>
+<tr><th>Error</th><th>When</th></tr>
+<tr><td><code>INVALID_REQUEST</code></td><td>Quote ID or key missing</td></tr>
+<tr><td><code>QUOTE_NOT_FOUND</code></td><td>Unknown quote, or the quote belongs to another user</td></tr>
+<tr><td><code>QUOTE_EXPIRED</code></td><td>More than 60 seconds since the quote was created</td></tr>
+<tr><td><code>QUOTE_USED</code></td><td>Quote already executed with a different key</td></tr>
+<tr><td><code>IDEMPOTENCY_CONFLICT</code></td><td>The key was already used for a different quote</td></tr>
+<tr><td><code>INSUFFICIENT_FUNDS</code></td><td>Balance dropped below the amount after quoting</td></tr>
+<tr><td><code>NO_WALLET</code>, <code>RECIPIENT_NOT_FOUND</code></td><td>Sender wallet or recipient account no longer exists</td></tr>
+</table></div>
+</div>
+
+<div class="endpoint" id="history">
+<h3><span class="method m-post">POST</span><span class="path">/rest/v1/rpc/list_my_transactions</span></h3>
+<div class="tags"><span class="tag">Returns array</span><span class="tag secure">RLS</span></div>
+<p>Your transaction history (sent, received and the welcome grant), newest first, with filters and paging.</p>
+<div class="table-wrap"><table>
+<tr><th>Parameter</th><th>Type</th><th>Notes</th></tr>
+<tr><td><code>p_direction</code></td><td><code>sent</code> | <code>received</code></td><td>Optional</td></tr>
+<tr><td><code>p_currency</code></td><td>currency</td><td>Optional. Matches your side of the transaction.</td></tr>
+<tr><td><code>p_from</code></td><td>timestamp</td><td>Optional, inclusive</td></tr>
+<tr><td><code>p_to</code></td><td>timestamp</td><td>Optional, exclusive</td></tr>
+<tr><td><code>p_limit</code></td><td>integer</td><td>Default 20, clamped to 1–100</td></tr>
+<tr><td><code>p_offset</code></td><td>integer</td><td>Default 0</td></tr>
+</table></div>
+<div class="code"><pre>page = api.rpc("list_my_transactions", p_direction="sent", p_limit=50)
+total = page[0]["total_count"] if page else 0
+
+november = api.rpc("list_my_transactions",
+                   p_from="2026-11-01T00:00:00Z", p_to="2026-12-01T00:00:00Z")</pre></div>
+<div class="code"><pre>[{
+  "id": "7f21…", "created_at": "2026-11-22T09:15:31.902+00:00",
+  "type": "transfer", "status": "completed", "direction": "sent",
+  "sender_user_id": "6c0f…", "sender_display_name": "Alice", "sender_email": "alice@example.com",
+  "recipient_user_id": "e41d…", "recipient_display_name": "Bob", "recipient_email": "bob@example.com",
+  "sending_amount_minor": 5000, "sending_currency": "ILS",
+  "receiving_amount_minor": 1369, "receiving_currency": "USD",
+  "exchange_rate": 0.2738824496, "amount_input_side": "send",
+  "rate_provider_updated_at": "2026-11-22T00:00:01+00:00",
+  "total_count": 12
+}]</pre></div>
+<p><code>total_count</code> is the number of matching rows before paging. It's repeated on every row.</p>
+</div>
+
+<div class="endpoint" id="transactions-table">
+<h3><span class="method m-get">GET</span><span class="path">/rest/v1/transactions</span>
+&nbsp;<span class="method m-get">GET</span><span class="path">/rest/v1/transfer_quotes</span></h3>
+<div class="tags"><span class="tag secure">RLS</span><span class="tag">Read-only</span></div>
+<p>Raw ledger rows you're part of, and quotes you created. Transactions can't be changed or deleted by anyone through the API.</p>
+<div class="code"><pre>txn = api.select("transactions", id=f"eq.{txn_id}")[0]
+recent_quotes = api.select("transfer_quotes", order="created_at.desc", limit=5)</pre></div>
+</div>
+</section>
+
+<!-- ======================================================================= -->
+<section id="notifications-sec">
+<h2>Notifications</h2>
+
+<div class="endpoint" id="notifications">
+<h3><span class="method m-get">GET</span><span class="path">/rest/v1/notifications</span></h3>
+<div class="tags"><span class="tag secure">RLS: own only</span><span class="tag">Read-only</span></div>
+<p>A notification is created for the recipient in the same database transaction as each completed transfer.</p>
+<div class="code"><pre>items = api.select("notifications", order="created_at.desc", limit=20)
+
+# Unread count without downloading rows: read the Content-Range header
+r = api.http.head(f"{BASE_URL}/rest/v1/notifications",
+                  params={"is_read": "eq.false"}, headers={"Prefer": "count=exact"})
+unread = int(r.headers["Content-Range"].split("/")[1])</pre></div>
+<div class="code"><pre>[{
+  "id": "51aa…", "user_id": "e41d…", "transaction_id": "7f21…",
+  "kind": "payment_received", "title": "Payment received",
+  "message": "Alice (alice@example.com) sent you $13.69.",
+  "sender_display_name": "Alice", "sender_email": "alice@example.com",
+  "amount_minor": 1369, "currency": "USD",
+  "is_read": false, "read_at": null, "created_at": "2026-11-22T09:15:31.902+00:00"
+}]</pre></div>
+<p>The web app also receives notifications live over Supabase Realtime (WebSocket). That channel isn't plain REST, so for scripted tests, poll this endpoint instead.</p>
+</div>
+
+<div class="endpoint" id="mark-read">
+<h3><span class="method m-post">POST</span><span class="path">/rest/v1/rpc/mark_notifications_read</span></h3>
+<div class="tags"><span class="tag">Returns integer</span></div>
+<p>Marks notifications as read and returns how many changed. Leave out <code>p_ids</code> to mark all of them.</p>
+<div class="code"><pre>api.rpc("mark_notifications_read", p_ids=["51aa…"])   # -> 1
+api.rpc("mark_notifications_read")                     # all unread -> n</pre></div>
+</div>
+</section>
+
+<!-- ======================================================================= -->
+<section id="payment-methods">
+<h2>Payment methods</h2>
+<div class="callout">
+<strong>These are simulated.</strong>
+They aren't connected to any processor or bank, and they don't affect wallet balances. Full card numbers and CVVs are validated in memory and never stored. Account numbers and IBANs are stored masked only. Use test numbers, never real cards.
+</div>
+
+<div class="endpoint" id="cards-add">
+<h3><span class="method m-post">POST</span><span class="path">/functions/v1/add-payment-card</span></h3>
+<div class="tags"><span class="tag secure">Bearer token</span><span class="tag">Max 10 per user</span></div>
+<div class="table-wrap"><table>
+<tr><th>Field</th><th>Rules</th></tr>
+<tr><td><code>cardholderName</code></td><td>2–100 characters: letters, spaces and <code>. ' -</code></td></tr>
+<tr><td><code>cardNumber</code></td><td>Digits (spaces and dashes are ignored). Must pass the Luhn check and the length rule for its brand.</td></tr>
+<tr><td><code>expiry</code></td><td><code>MM/YY</code>, not in the past and at most 20 years ahead</td></tr>
+<tr><td><code>cvv</code></td><td>3 digits (4 for Amex). Validated, then discarded.</td></tr>
+</table></div>
+<div class="code"><pre>res = api.edge("add-payment-card", {
+    "cardholderName": "Alice Cohen",
+    "cardNumber": "4242 4242 4242 4242",   # Luhn-valid test number
+    "expiry": "12/29",
+    "cvv": "123",
+})
+card = res["card"]</pre></div>
+<div class="label">201 Created</div>
+<div class="code"><pre>{"card": {
+  "id": "c0de…", "cardholder_name": "Alice Cohen", "card_brand": "visa",
+  "last_four_digits": "4242", "expiration_month": 12, "expiration_year": 2029,
+  "created_at": "2026-11-22T09:20:11+00:00"
+}}</pre></div>
+<div class="label">400 Validation failed</div>
+<div class="code"><pre>{"error": "VALIDATION_FAILED",
+ "fields": {"cardNumber": "Card number is not valid (checksum failed).", "cvv": "CVV must be 3 digits."}}</pre></div>
+<p><strong>Other errors:</strong> 401 <code>NOT_AUTHENTICATED</code>, 400 <code>INVALID_REQUEST</code> (body isn't a JSON object or is over 4 KB), 409 <code>LIMIT_REACHED</code>.</p>
+<p>Other test numbers: Mastercard <code>5555555555554444</code>, Amex <code>378282246310005</code> (4-digit CVV).</p>
+</div>
+
+<div class="endpoint" id="cards">
+<h3><span class="method m-get">GET</span><span class="path">/rest/v1/payment_cards</span>
+&nbsp;<span class="method m-delete">DELETE</span><span class="path">/rest/v1/payment_cards?id=eq.&lt;id&gt;</span></h3>
+<div class="tags"><span class="tag secure">RLS: own only</span></div>
+<div class="code"><pre>cards = api.select("payment_cards",
+                   select="id,cardholder_name,card_brand,last_four_digits,expiration_month,expiration_year,created_at",
+                   order="created_at.desc")
+
+r = api.http.delete(f"{BASE_URL}/rest/v1/payment_cards", params={"id": f"eq.{card['id']}"})
+assert r.status_code == 204</pre></div>
+<p>Deleting another user's card returns 204 but removes nothing, because RLS hides the row. Add <code>Prefer: return=representation</code> to get the deleted rows back and check what was removed.</p>
+</div>
+
+<div class="endpoint" id="banks-add">
+<h3><span class="method m-post">POST</span><span class="path">/functions/v1/add-bank-account</span></h3>
+<div class="tags"><span class="tag secure">Bearer token</span><span class="tag">Max 10 per user</span></div>
+<div class="table-wrap"><table>
+<tr><th>Field</th><th>Rules</th></tr>
+<tr><td><code>accountHolderName</code></td><td>2–100 characters: letters, spaces and <code>. ' -</code></td></tr>
+<tr><td><code>bankName</code></td><td>2–100 characters, no <code>&lt; &gt; { }</code></td></tr>
+<tr><td><code>country</code></td><td>IL, US, GB, DE, FR, ES, IT, NL, BE, AT, CH, IE, PT, SE, NO, DK, FI, PL, CA, AU</td></tr>
+<tr><td><code>currency</code></td><td><code>ILS</code> | <code>USD</code> | <code>EUR</code> | <code>GBP</code></td></tr>
+<tr><td><code>accountIdentifier</code></td><td>An IBAN that matches the country (correct length and mod-97 checksum), or 4–20 digits for countries without IBANs (US, CA, AU)</td></tr>
+</table></div>
+<div class="code"><pre>res = api.edge("add-bank-account", {
+    "accountHolderName": "Alice Cohen",
+    "bankName": "Test Bank",
+    "country": "IL",
+    "currency": "ILS",
+    "accountIdentifier": "IL62 0108 0000 0009 9999 999",   # valid example IBAN
+})</pre></div>
+<div class="label">201 Created</div>
+<div class="code"><pre>{"account": {
+  "id": "ba2c…", "account_holder_name": "Alice Cohen", "bank_name": "Test Bank",
+  "country": "IL", "currency": "ILS", "identifier_type": "iban",
+  "masked_account_identifier": "IL•• •••• 9999", "created_at": "2026-11-22T09:22:40+00:00"
+}}</pre></div>
+<p>US example: <code>{"country": "US", "accountIdentifier": "123456789"}</code> → masked as <code>•••• 6789</code>. GB example IBAN: <code>GB82WEST12345698765432</code>.</p>
+<p><strong>Errors:</strong> same shape as <a href="#cards-add">add-payment-card</a> (<code>VALIDATION_FAILED</code> with <code>fields</code>, <code>LIMIT_REACHED</code>, …).</p>
+</div>
+
+<div class="endpoint" id="banks">
+<h3><span class="method m-get">GET</span><span class="path">/rest/v1/bank_accounts</span>
+&nbsp;<span class="method m-delete">DELETE</span><span class="path">/rest/v1/bank_accounts?id=eq.&lt;id&gt;</span></h3>
+<div class="tags"><span class="tag secure">RLS: own only</span></div>
+<div class="code"><pre>accounts = api.select("bank_accounts", order="created_at.desc")
+api.http.delete(f"{BASE_URL}/rest/v1/bank_accounts", params={"id": f"eq.{account_id}"})</pre></div>
+</div>
+</section>
+
+<!-- ======================================================================= -->
+<section id="e2e">
+<h2>End-to-end test</h2>
+<p>A complete pytest example. It uses two pre-registered test accounts and checks that a transfer is atomic, idempotent and visible to both sides. Put the <code>DummyPay</code> client from above in <code>dummypay_client.py</code> next to it.</p>
+<div class="code"><pre>import os
+import time
+import uuid
+
+import pytest
+from dummypay_client import BASE_URL, ApiError, DummyPay
+
+
+@pytest.fixture(scope="session")
+def alice():
+    api = DummyPay()
+    api.sign_in(os.environ["ALICE_EMAIL"], os.environ["ALICE_PASSWORD"])
+    return api
+
+
+@pytest.fixture(scope="session")
+def bob():
+    api = DummyPay()
+    api.sign_in(os.environ["BOB_EMAIL"], os.environ["BOB_PASSWORD"])
+    return api
+
+
+def balance(api, currency):
+    rows = api.select("wallets", currency=f"eq.{currency}", select="balance_minor")
+    return rows[0]["balance_minor"] if rows else 0
+
+
+def test_transfer_moves_money_exactly_once(alice, bob):
+    bob_profile = bob.select("profiles")[0]
+    send_ccy = alice.select("profiles")[0]["preferred_currency"]
+    recv_ccy = bob_profile["preferred_currency"]
+
+    alice_before = balance(alice, send_ccy)
+    bob_before = balance(bob, recv_ccy)
+
+    found = alice.rpc("lookup_recipient", p_email=bob_profile["email"])[0]
+    assert found["status"] == "found"
+
+    quote = alice.rpc("create_transfer_quote",
+                      p_recipient_id=found["user_id"], p_sending_currency=send_ccy,
+                      p_amount_minor=100, p_input_side="send")
+
+    key = str(uuid.uuid4())
+    txn = alice.rpc("execute_transfer", p_quote_id=quote["quote_id"], p_idempotency_key=key)
+    replay = alice.rpc("execute_transfer", p_quote_id=quote["quote_id"], p_idempotency_key=key)
+    assert replay["id"] == txn["id"]
+
+    assert balance(alice, send_ccy) == alice_before - quote["sending_amount_minor"]
+    assert balance(bob, recv_ccy) == bob_before + quote["receiving_amount_minor"]
+
+    notes = bob.select("notifications", transaction_id=f"eq.{txn['id']}")
+    assert len(notes) == 1 and notes[0]["amount_minor"] == quote["receiving_amount_minor"]
+
+
+def test_quote_cannot_be_reused_with_new_key(alice, bob):
+    bob_email = bob.select("profiles")[0]["email"]
+    rid = alice.rpc("lookup_recipient", p_email=bob_email)[0]["user_id"]
+    ccy = alice.select("profiles")[0]["preferred_currency"]
+    quote = alice.rpc("create_transfer_quote", p_recipient_id=rid, p_sending_currency=ccy,
+                      p_amount_minor=100, p_input_side="send")
+    alice.rpc("execute_transfer", p_quote_id=quote["quote_id"], p_idempotency_key=str(uuid.uuid4()))
+
+    with pytest.raises(ApiError) as e:
+        alice.rpc("execute_transfer", p_quote_id=quote["quote_id"], p_idempotency_key=str(uuid.uuid4()))
+    assert e.value.code == "QUOTE_USED"
+
+
+def test_balances_are_read_only(alice):
+    wallet = alice.select("wallets")[0]
+    r = alice.http.patch(f"{BASE_URL}/rest/v1/wallets",
+                         params={"id": f"eq.{wallet['id']}"}, json={"balance_minor": 10**9})
+    assert r.status_code in (401, 403)
+
+
+def test_cannot_read_other_users_wallets(alice, bob):
+    bob_wallet_ids = {w["id"] for w in bob.select("wallets")}
+    alice_view = {w["id"] for w in alice.select("wallets")}
+    assert not (bob_wallet_ids &amp; alice_view)</pre></div>
+<div class="callout">
+<strong>Test data is permanent.</strong>
+Ledger rows can't be changed or deleted, so every test transfer stays in both users' history. Use dedicated test accounts and small amounts.
+</div>
+</section>
+
+<!-- ======================================================================= -->
+<section id="error-codes">
+<h2>Error code index</h2>
+<div class="table-wrap"><table>
+<tr><th>Code</th><th>Source</th><th>Meaning</th></tr>
+<tr><td><code>NOT_AUTHENTICATED</code></td><td>RPC, Edge</td><td>No valid user token</td></tr>
+<tr><td><code>INVALID_CURRENCY</code></td><td>RPC, sign-up</td><td>Missing or unsupported currency</td></tr>
+<tr><td><code>INVALID_DISPLAY_NAME</code></td><td>Sign-up</td><td>Display name not 2–50 characters</td></tr>
+<tr><td><code>EMAIL_REQUIRED</code></td><td>Sign-up</td><td>No email supplied</td></tr>
+<tr><td><code>INVALID_AMOUNT</code></td><td>Quote, preview</td><td>Out of range, or too small to convert</td></tr>
+<tr><td><code>INVALID_EMAIL</code></td><td>Lookup</td><td>Not a valid email address</td></tr>
+<tr><td><code>WALLET_EXISTS</code></td><td><code>add_wallet</code></td><td>You already have a wallet in that currency</td></tr>
+<tr><td><code>NO_WALLET</code></td><td>Quote, execute</td><td>No wallet in the sending currency</td></tr>
+<tr><td><code>RATE_UNAVAILABLE</code></td><td>Quote, preview</td><td>No exchange rate for the pair</td></tr>
+<tr><td><code>RATE_STALE</code></td><td>Quote, preview</td><td>Rate older than 26 hours. Call <code>fx-refresh</code>.</td></tr>
+<tr><td><code>RECIPIENT_NOT_FOUND</code></td><td>Quote, execute</td><td>Recipient isn't a registered user</td></tr>
+<tr><td><code>SELF_TRANSFER</code></td><td>Quote</td><td>Recipient is yourself</td></tr>
+<tr><td><code>INSUFFICIENT_FUNDS</code></td><td>Quote, execute</td><td>Balance is lower than the sending amount</td></tr>
+<tr><td><code>RATE_LIMITED</code></td><td>Lookup, quote</td><td>Too many calls in the last minute</td></tr>
+<tr><td><code>INVALID_REQUEST</code></td><td>Execute, Edge</td><td>Required input missing or malformed</td></tr>
+<tr><td><code>QUOTE_NOT_FOUND</code></td><td>Execute</td><td>Unknown quote, or not yours</td></tr>
+<tr><td><code>QUOTE_EXPIRED</code></td><td>Execute</td><td>Quote is older than 60 seconds</td></tr>
+<tr><td><code>QUOTE_USED</code></td><td>Execute</td><td>Quote already executed</td></tr>
+<tr><td><code>IDEMPOTENCY_CONFLICT</code></td><td>Execute</td><td>Key already used for another quote</td></tr>
+<tr><td><code>TRANSACTION_IMMUTABLE</code></td><td>Database</td><td>Attempt to modify the ledger</td></tr>
+<tr><td><code>VALIDATION_FAILED</code></td><td>Edge</td><td>Field errors are in <code>fields</code></td></tr>
+<tr><td><code>LIMIT_REACHED</code></td><td>Edge</td><td>10 cards or 10 bank accounts already stored</td></tr>
+<tr><td><code>METHOD_NOT_ALLOWED</code></td><td>Edge</td><td>Edge Functions accept only <code>POST</code></td></tr>
+<tr><td><code>INTERNAL</code></td><td>Edge</td><td>Unexpected server error</td></tr>
+</table></div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function () {
+  // Copy buttons on every code block.
+  document.querySelectorAll('.code').forEach(function (block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = block.querySelector('pre').innerText;
+      var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1400); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { btn.textContent = 'Copy failed'; });
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) { btn.textContent = 'Copy failed'; }
+        document.body.removeChild(ta);
+      }
+    });
+    block.appendChild(btn);
+  });
+
+  // Theme toggle (remembered per browser where storage is available).
+  var root = document.documentElement;
+  try {
+    var saved = localStorage.getItem('dummypay-api-theme');
+    if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved);
+  } catch (e) {}
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    var current = root.getAttribute('data-theme') ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('dummypay-api-theme', next); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>
